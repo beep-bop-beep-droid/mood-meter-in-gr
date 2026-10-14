@@ -1088,9 +1088,12 @@ function range(o=H.o){const n=new Date(),Y=n.getFullYear(),M=n.getMonth(),D=n.ge
 function label(s,e){return H.m==='day'?s.toLocaleDateString('el-GR',{dateStyle:'full'}):H.m==='week'?f1(s)+' – '+f1(new Date(e-864e5)):H.m==='month'?s.toLocaleDateString('el-GR',{month:'long',year:'numeric'}):String(s.getFullYear())}
 
 const loc=t=>{const d=new Date(t-new Date(t).getTimezoneOffset()*6e4);return d.toISOString().slice(0,16)};
+/* Λήψη αρχείου: μέσα στο claude.ai μέσω του μηχανισμού λήψης του· σε κανονικό browser (ή αν αυτός αποτύχει) με απλή λήψη αρχείου */
+const plainDl=(name,data)=>{try{const u=URL.createObjectURL(new Blob([data],{type:(/\.json$/i.test(name)?'application/json':'text/html')+';charset=utf-8'})),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);return true}catch(e){return false}};
 const dl=async(name,data)=>{let d=null;try{d=window.claude?await window.claude.use('downloads'):null}catch(e){}
- if(!d){alert('Η λήψη αρχείου δεν είναι διαθέσιμη εδώ.');return}
- try{await d.save({filename:name,data});return true}catch(e){if(!e||e.code!=='declined')alert('Η λήψη δεν ολοκληρώθηκε.');return false}};
+ if(d){try{await d.save({filename:name,data});return true}catch(e){if(e&&e.code==='declined')return false}}
+ if(plainDl(name,data))return true;
+ alert('Η λήψη του αρχείου δεν ολοκληρώθηκε. Δοκίμασε να ανοίξεις τη σελίδα σε κανονικό browser.');return false};
 function imp(txt){const j=JSON.parse(txt),inc=Array.isArray(j)?j:j.entries;if(!Array.isArray(inc))throw 0;
  const a=load(),have=new Set(a.map(x=>x.t));let n=0;
  inc.forEach(x=>{if(x&&Q[x.q]&&typeof x.w==='string'&&Number.isFinite(x.t)&&!have.has(x.t)){a.push({t:x.t,q:x.q,w:x.w,e:x.e,ctx:x.ctx&&typeof x.ctx==='object'?x.ctx:{},note:String(x.note||''),from:x.from,strat:x.strat});have.add(x.t);n++}});
