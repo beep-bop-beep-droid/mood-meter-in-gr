@@ -1,0 +1,75 @@
+{
+ "name": "Mood Meter – Καταγραφή συναισθημάτων",
+ "short_name": "Mood Meter",
+ "description": "Καταγραφή συναισθημάτων με βάση το Mood Meter. Τα δεδομένα μένουν μόνο στη συσκευή σου.",
+ "lang": "el",
+ "dir": "ltr",
+ "id": "./",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#f6f5f1",
+ "theme_color": "#f6f5f1",
+ "categories": [
+  "health",
+  "lifestyle"
+ ],
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "shortcuts": [
+  {
+   "name": "Νέα καταγραφή",
+   "short_name": "Καταγραφή",
+   "url": "./#record",
+   "icons": [
+    {
+     "src": "icons/icon-192.png",
+     "sizes": "192x192",
+     "type": "image/png"
+    }
+   ]
+  },
+  {
+   "name": "Η μέρα μου",
+   "short_name": "Η μέρα μου",
+   "url": "./#day",
+   "icons": [
+    {
+     "src": "icons/icon-192.png",
+     "sizes": "192x192",
+     "type": "image/png"
+    }
+   ]
+  },
+  {
+   "name": "Ασκήσεις",
+   "short_name": "Ασκήσεις",
+   "url": "./#exercises",
+   "icons": [
+    {
+     "src": "icons/icon-192.png",
+     "sizes": "192x192",
+     "type": "image/png"
+    }
+   ]
+  }
+ ]
+}

@@ -1,9 +1,15 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="el">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mood Meter">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Mood Meter – Καταγραφή συναισθημάτων</title>
 <script>
 /* ═══ ΕΔΩ ΕΙΝΑΙ ΤΑ ΚΕΙΜΕΝΑ ΤΩΝ ΣΥΝΑΙΣΘΗΜΑΤΩΝ — οδηγίες μέσα στο μπλοκ. Τον υπόλοιπο κώδικα δεν χρειάζεται να τον αγγίξεις. ═══ */
@@ -802,6 +808,177 @@ Serene | αταραξία
 
 `;
 </script>
+<script>
+/* ═══ ΕΔΩ ΕΙΝΑΙ ΤΑ ΚΕΙΜΕΝΑ ΤΩΝ ΑΣΚΗΣΕΩΝ — οδηγίες μέσα στο μπλοκ. Τον υπόλοιπο κώδικα δεν χρειάζεται να τον αγγίξεις. ═══ */
+const EXERCISES_TEXT=String.raw`
+# ══════════════════════════════════════════════════════════════════════
+#  ΑΣΚΗΣΕΙΣ ΜΕ ΟΔΗΓΟ — εδώ αλλάζεις, προσθέτεις ή αφαιρείς ασκήσεις
+# ══════════════════════════════════════════════════════════════════════
+#
+#  Κάθε άσκηση είναι ένα μπλοκ. Η πρώτη γραμμή είναι η επικεφαλίδα:
+#
+#    == κωδικός | είδος | Τίτλος | χρώματα ==
+#
+#   • κωδικός : μοναδικός, μόνο λατινικά πεζά και ψηφία (π.χ. breath, ground2)
+#   • είδος   : ένα από τα τέσσερα παρακάτω
+#   • Τίτλος  : αυτό που βλέπει ο χρήστης. Είναι και το όνομα της «στρατηγικής» που
+#               καταγράφεται στο ιστορικό («Επανέλεγχος μετά από …»). Αν τον αλλάξεις,
+#               οι παλιές καταγραφές κρατούν τον παλιό τίτλο.
+#   • χρώματα : σε ποια τεταρτημόρια προτείνεται, χωρισμένα με κόμμα:
+#               red, yellow, blue, green  ή  all (για όλα)
+#
+#  ΕΙΔΗ ΑΣΚΗΣΗΣ
+#
+#   pace   Αναπνοή με κύκλο που μεγαλώνει/μικραίνει.
+#            ρυθμός: 4 6 10      ← δευτερόλεπτα εισπνοής, εκπνοής, και αριθμός κύκλων
+#   steps  Οδηγίες βήμα-βήμα, προχωράς εσύ με το κουμπί «Επόμενο».
+#            βήμα: κείμενο       ← ένα βήμα ανά γραμμή (όσα θες)
+#   timed  Οδηγίες που αλλάζουν μόνες τους μετά από κάποια δευτερόλεπτα.
+#            βήμα: 15 | κείμενο  ← δευτερόλεπτα | κείμενο (όσα θες)
+#   write  Ένα ή περισσότερα πλαίσια γραψίματος. Το κείμενο ΔΕΝ αποθηκεύεται πουθενά.
+#            πεδίο: ερώτηση      ← ένα πλαίσιο ανά γραμμή
+#            άφημα: ναι          ← (προαιρετικό) το κείμενο «φεύγει» με animation και σβήνεται
+#            κράτα: ναι          ← (προαιρετικό) στο τέλος εμφανίζονται ξανά οι απαντήσεις
+#                                  (μόνο στη μνήμη της σελίδας· χάνονται μόλις φύγεις)
+#
+#  ΚΟΙΝΑ ΠΕΔΙΑ (κάθε ένα σε ΜΙΑ γραμμή, με δύο κενά μπροστά)
+#
+#    εισαγωγή: ...    ← τι είναι η άσκηση, δείχνεται πριν ξεκινήσεις
+#    συμβουλή: ...    ← (προαιρετικό) μικρή οδηγία/προσοχή, με μικρά γράμματα
+#    τέλος: ...       ← μήνυμα στο τέλος
+#    διάρκεια: ...    ← (προαιρετικό) π.χ. ≈2 λεπτά. Στα pace και timed υπολογίζεται μόνη της.
+#
+#  ΚΑΝΟΝΕΣ
+#   • Γραμμές που ξεκινούν με # είναι σχόλια και αγνοούνται.
+#   • Μέσα στα κείμενα μην βάζεις τον χαρακτήρα | (εκτός από το βήμα των timed και την
+#     επικεφαλίδα), το ανάποδο εισαγωγικό (backtick) ούτε «δολάριο + άγκιστρο».
+#   • Η ΣΕΙΡΑ ΜΕΤΡΑΕΙ: οι ασκήσεις εμφανίζονται με τη σειρά που τις γράφεις.
+#   • Αν κάτι δεν πάει καλά, η εφαρμογή γράφει προειδοποίηση στην κονσόλα του browser
+#     (F12 → Console) με τον αριθμό της γραμμής και προσπερνά την άσκηση.
+#   • Πάνω από 3 λεπτά δεν προτείνεται: οι ασκήσεις είναι για τη στιγμή που τις χρειάζεσαι.
+
+== breath | pace | Αναπνοή 4–6 | red, yellow ==
+  εισαγωγή: Αργή αναπνοή με μεγαλύτερη εκπνοή. Βοηθά το σώμα να ηρεμήσει όταν η ένταση είναι υψηλή.
+  συμβουλή: Κάθισε αναπαυτικά και άσε τους ώμους να πέσουν. Ακολούθησε τον κύκλο. Αν νιώσεις ζάλη, σταμάτα και αναπνεύσε φυσιολογικά.
+  ρυθμός: 4 6 10
+  τέλος: Πρόσεξε πώς νιώθει τώρα το σώμα σου, χωρίς να προσπαθήσεις να το αλλάξεις.
+
+== ground | steps | Γείωση 5-4-3-2-1 | red, blue ==
+  εισαγωγή: Επιστρέφεις στο εδώ και τώρα μέσα από τις αισθήσεις σου. Πήγαινε με τον δικό σου ρυθμό.
+  διάρκεια: ≈2 λεπτά
+  βήμα: Βρες 5 πράγματα που βλέπεις. Κοίταξε γύρω σου και ονόμασέ τα ένα ένα, από μέσα σου ή δυνατά.
+  βήμα: Βρες 4 πράγματα που μπορείς να αγγίξεις. Νιώσε την υφή τους: τα ρούχα σου, την καρέκλα, το έδαφος.
+  βήμα: Άκουσε 3 ήχους, κοντινούς και μακρινούς. Δεν χρειάζεται να σου αρέσουν, απλώς πρόσεξέ τους.
+  βήμα: Βρες 2 πράγματα που μυρίζεις. Αν δεν μυρίζεις κάτι, φαντάσου μια μυρωδιά που σου αρέσει.
+  βήμα: Βρες 1 πράγμα που γεύεσαι. Ή πάρε μια αργή ανάσα και πρόσεξε τη γεύση στο στόμα σου.
+  τέλος: Είσαι εδώ. Πρόσεξε αν κάτι άλλαξε στο σώμα ή στις σκέψεις σου.
+
+== release | write | Γράψε και άφησέ το | red, blue ==
+  εισαγωγή: Γράψε ελεύθερα ό,τι σε βαραίνει. Δεν χρειάζεται να βγάζει νόημα ούτε να είναι ευγενικό. Στο τέλος το αφήνεις να φύγει.
+  διάρκεια: ≈3 λεπτά
+  πεδίο: Τι με βαραίνει αυτή τη στιγμή;
+  πεδίο: Τι από αυτά μπορώ να επηρεάσω σήμερα, έστω και λίγο;
+  άφημα: ναι
+  τέλος: Το έγραψες και το άφησες να φύγει. Δεν αποθηκεύτηκε πουθενά.
+
+== scan | timed | Σάρωση σώματος | red, blue, green ==
+  εισαγωγή: Περνάς αργά την προσοχή σου από το σώμα, χωρίς να προσπαθείς να το αλλάξεις. Μπορείς να κλείσεις τα μάτια.
+  συμβουλή: Αν σου είναι δύσκολο να μείνεις κάπου, πάτησε «Παράλειψη» και προχώρα στο επόμενο σημείο.
+  βήμα: 15 | Πάρε μια αργή ανάσα. Νιώσε το βάρος του σώματός σου στο κάθισμα ή στο έδαφος.
+  βήμα: 15 | Πρόσεξε τα πόδια και τις γάμπες. Τι νιώθεις εκεί; Ζεστασιά, βάρος, μούδιασμα, τίποτα;
+  βήμα: 15 | Πήγαινε στην κοιλιά και το στομάχι. Άσε τους μύες να μαλακώσουν.
+  βήμα: 15 | Πρόσεξε το στήθος και την ανάσα σου. Δεν χρειάζεται να την αλλάξεις.
+  βήμα: 15 | Πήγαινε στα χέρια και τους ώμους. Άσε τους ώμους να πέσουν.
+  βήμα: 15 | Πρόσεξε τον λαιμό, το σαγόνι και το πρόσωπο. Χαλάρωσε το σαγόνι.
+  βήμα: 15 | Άνοιξε την προσοχή σε ολόκληρο το σώμα, σαν να το νιώθεις μονομιάς.
+  τέλος: Αν πρόσεξες κάτι στο σώμα σου, μπορείς να το σημειώσεις στην επόμενη καταγραφή, στο «Στο σώμα».
+
+== friend | write | Τι θα έλεγα σε φίλο; | blue, red ==
+  εισαγωγή: Συχνά είμαστε πιο αυστηροί με τον εαυτό μας απ' ό,τι με τους άλλους. Δες την ίδια κατάσταση με τα μάτια ενός φίλου.
+  διάρκεια: ≈3 λεπτά
+  πεδίο: Τι συμβαίνει; Περίγραψέ το σε μία-δύο προτάσεις.
+  πεδίο: Αν ένας φίλος μου ζούσε το ίδιο, τι θα του έλεγα;
+  πεδίο: Ποιο κομμάτι από αυτό θα μπορούσα να πω και στον εαυτό μου;
+  κράτα: ναι
+  τέλος: Μπορείς να ξαναδιαβάσεις παρακάτω τι έγραψες, πριν προχωρήσεις.
+
+== thanks | write | Τρία καλά | green, yellow ==
+  εισαγωγή: Σκέψου τρία πράγματα, μικρά ή μεγάλα, που πήγαν καλά ή που εκτιμάς σήμερα.
+  διάρκεια: ≈3 λεπτά
+  πεδίο: Κάτι που πήγε καλά ή που εκτιμώ σήμερα
+  πεδίο: Ένα δεύτερο
+  πεδίο: Και ένα τρίτο, όσο μικρό κι αν είναι
+  πεδίο: Τι ή ποιος βοήθησε να συμβεί ένα από αυτά;
+  κράτα: ναι
+  τέλος: Μπορείς να ξαναδιαβάσεις παρακάτω τι έγραψες και να μείνεις λίγο σε αυτό.
+
+== savor | timed | Απόλαυσε τη στιγμή | yellow, green ==
+  εισαγωγή: Όταν νιώθεις καλά, αξίζει να το προσέξεις, ώστε να κρατήσει λίγο περισσότερο.
+  βήμα: 20 | Σταμάτα ό,τι κάνεις. Πάρε μια βαθιά ανάσα και πρόσεξε πώς νιώθεις αυτή τη στιγμή.
+  βήμα: 20 | Πού το νιώθεις στο σώμα; Στο στήθος, στο πρόσωπο, στους ώμους; Μείνε εκεί.
+  βήμα: 20 | Τι το προκάλεσε; Φέρε στο μυαλό σου τη στιγμή, τον άνθρωπο ή το γεγονός.
+  βήμα: 20 | Μείνε με αυτό το συναίσθημα. Άσε το να μεγαλώσει λίγο, χωρίς να το αναλύεις.
+  βήμα: 15 | Αν θέλεις, σκέψου πώς μπορείς να το μοιραστείς ή να το ξαναβρείς αργότερα.
+  τέλος: Αυτή η στιγμή είναι δική σου. Μπορείς να σημειώσεις τι την προκάλεσε στην επόμενη καταγραφή.
+`;
+</script>
+<script>
+/* ═══ ΕΔΩ ΕΙΝΑΙ ΟΙ ΠΑΡΑΓΟΝΤΕΣ ΤΗΣ «ΜΕΡΑΣ ΜΟΥ» — οδηγίες μέσα στο μπλοκ. Τον υπόλοιπο κώδικα δεν χρειάζεται να τον αγγίξεις. ═══ */
+const FACTORS_TEXT=String.raw`
+# ══════════════════════════════════════════════════════════════════════
+#  ΠΑΡΑΓΟΝΤΕΣ ΤΗΣ ΗΜΕΡΑΣ — εδώ αλλάζεις τι ρωτάει η «Η μέρα μου»
+# ══════════════════════════════════════════════════════════════════════
+#
+#  Κάθε παράγοντας είναι ένα μπλοκ. Η πρώτη γραμμή είναι η επικεφαλίδα:
+#
+#    == κωδικός | είδος | Όνομα ==
+#      ερώτηση: ...                       ← η ερώτηση που βλέπει ο χρήστης
+#      βοήθεια: ...                       ← (προαιρετικό) διευκρίνιση με μικρά γράμματα
+#      επιλογές: Α | Β | Γ | Δ            ← 2 έως 8 επιλογές, χωρισμένες με |
+#
+#   • κωδικός : μοναδικός, μόνο λατινικά πεζά και ψηφία (π.χ. sleep, coffee)
+#   • είδος   : ordered  → οι επιλογές είναι σε σειρά, ΑΠΟ ΤΟ ΛΙΓΟΤΕΡΟ ΣΤΟ ΠΕΡΙΣΣΟΤΕΡΟ
+#                          (π.χ. ύπνος: λίγος → πολύς). Στις ενδείξεις η εφαρμογή
+#                          χωρίζει τις ημέρες σε «λιγότερο» και «περισσότερο».
+#               category → οι επιλογές δεν έχουν σειρά (π.χ. καιρός). Στις ενδείξεις
+#                          συγκρίνονται οι επιλογές μεταξύ τους.
+#   • Όνομα   : σύντομο όνομα (φαίνεται στις ενδείξεις και στην αναφορά)
+#
+#  ΚΑΝΟΝΕΣ
+#   • Γραμμές που ξεκινούν με # είναι σχόλια και αγνοούνται.
+#   • Η ΣΕΙΡΑ ΜΕΤΡΑΕΙ: οι παράγοντες εμφανίζονται με τη σειρά που τους γράφεις.
+#   • Κάθε επιλογή έως 28 χαρακτήρες. Μην βάζεις μέσα στα κείμενα τον χαρακτήρα | ,
+#     το ανάποδο εισαγωγικό (backtick) ούτε «δολάριο + άγκιστρο».
+#   • Οι απαντήσεις αποθηκεύονται με το ΚΕΙΜΕΝΟ της επιλογής. Αν αλλάξεις το κείμενο μιας
+#     επιλογής (ή τον κωδικό ενός παράγοντα), οι παλιές απαντήσεις παύουν να
+#     υπολογίζονται στις ενδείξεις (παραμένουν αποθηκευμένες). Αν μόνο προσθέσεις
+#     παράγοντες ή επιλογές, δεν χαλάει τίποτα.
+#   • Λίγοι παράγοντες είναι καλύτεροι: η συμπλήρωση πρέπει να παίρνει λιγότερο από ένα λεπτό.
+#   • Αν κάτι δεν πάει καλά, η εφαρμογή γράφει προειδοποίηση στην κονσόλα του browser
+#     (F12 → Console) με τον αριθμό της γραμμής και προσπερνά τον παράγοντα.
+
+== sleep | ordered | Ύπνος ==
+  ερώτηση: Πόσο κοιμήθηκες χθες το βράδυ;
+  επιλογές: Κάτω από 5 ώρες | 5–6 ώρες | 6–7 ώρες | 7–8 ώρες | Πάνω από 8 ώρες
+
+== move | ordered | Κίνηση ==
+  ερώτηση: Πόση κίνηση έκανες σήμερα;
+  βοήθεια: Ελαφριά: π.χ. περπάτημα. Μέτρια: γρήγορο βάδισμα, ποδήλατο. Έντονη: άσκηση που σε λαχανιάζει.
+  επιλογές: Καθόλου | Ελαφριά | Μέτρια | Έντονη
+
+== calm | ordered | Ηρεμία ==
+  ερώτηση: Πόσο χρόνο είχες σήμερα για ξεκούραση ή ηρεμία;
+  επιλογές: Καθόλου | Λίγο | Αρκετό | Πολύ
+
+== people | ordered | Επαφή με άλλους ==
+  ερώτηση: Είχες σήμερα ουσιαστική επαφή με κάποιον που νοιάζεται για σένα;
+  επιλογές: Καθόλου | Λίγη | Αρκετή
+
+== weather | category | Καιρός ==
+  ερώτηση: Πώς ήταν ο καιρός σήμερα;
+  επιλογές: Ηλιόλουστος | Συννεφιά | Βροχερός | Πολύ κρύος | Πολύ ζεστός
+`;
+</script>
 <style>
 :root{--bg:#f6f5f1;--fg:#1d1d1b;--mut:#6b6a66;--card:#fff;--bd:#e2e0d8;--red:#e5534b;--yel:#f0c23b;--blu:#4a7fd4;--grn:#4caf7a;--on:#fff;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -850,6 +1027,19 @@ input:not([type]){font:inherit;color:inherit;background:var(--bg);border:1px sol
 .wd{font-style:normal;display:block;max-width:100%}.eyh{display:none;margin-top:4px}button,select,.cell,.q{-webkit-tap-highlight-color:transparent;touch-action:manipulation}.cell,.q,.chip,nav button{-webkit-user-select:none;user-select:none}.md{max-height:85vh;max-height:85dvh}
 @media(max-width:600px){.mw{display:block}.mw .ey{display:none}.eyh{display:block}.mw .cell{font-size:.7rem}.mw .cell span{font-size:.58rem}button.pri{padding:15px}.seg button{padding:11px 4px;min-height:44px}nav button{min-height:44px}.pn button{min-height:44px;padding:8px 16px}.x{min-height:40px;min-width:36px}.chip{min-height:40px}.tt button{padding:8px 12px}#th{min-height:40px}}
 .seg.zt{gap:4px}.seg.zt button{padding:10px 2px;font-size:.82rem;white-space:nowrap;min-height:44px}.seg.zt .dot{width:9px;height:9px;margin-right:2px}
+summary{cursor:pointer;font-weight:600;font-size:1.1rem;margin:16px 0 8px;padding:6px 0}summary small{font-weight:400}h3.sg{font-size:.82rem;color:var(--mut);font-weight:600;margin:12px 0 6px}
+
+.xv label{display:block;color:var(--fg);font-size:.95rem;margin-top:6px}.dots{display:inline-flex;gap:4px}
+.xw{position:relative;width:min(70vw,260px);aspect-ratio:1;margin:18px auto;display:flex;align-items:center;justify-content:center}
+.xc{position:absolute;inset:0;border-radius:50%;border:4px solid var(--xa);background:color-mix(in srgb,var(--xa) 28%,transparent);transform:scale(.6)}
+.xt{position:relative;text-align:center}.xl{font-size:1.25rem;font-weight:600}.xt b{font-size:2.2rem;display:block;line-height:1.1}
+.xb{height:6px;border-radius:3px;background:var(--bd);overflow:hidden;margin:12px 0}.xb i{display:block;height:100%;width:0;background:var(--xa)}
+.xtx{font-size:1.2rem;line-height:1.5;margin:10px 0;min-height:3em}
+.xd{display:flex;gap:6px;justify-content:center;margin:10px 0 14px}.xd i{width:10px;height:10px;border-radius:50%;background:var(--bd)}.xd i.on{background:var(--xa)}
+#xwc{transition:opacity 1.4s ease,transform 1.4s ease,filter 1.4s ease}#xwc.go{opacity:0;transform:translateY(-28px);filter:blur(6px)}
+@media(prefers-reduced-motion:reduce){#xwc{transition:none}}
+.fb{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;position:relative}.fb i{position:absolute;top:0;bottom:0;background:var(--fg);opacity:.6}.fb::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--bg)}
+input[type=date]{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px;max-width:100%}
 </style>
 </head>
 <body>
@@ -916,11 +1106,17 @@ let EDIT=false;
 function ctxView(){
  const keep=()=>{const n=document.getElementById('note');if(n)S.note=n.value;const w=document.getElementById('when');if(w&&w.value){const t=new Date(w.value).getTime();if(!isNaN(t))S.when=t}};
  const ks=Object.keys(C),$=q=>app.querySelectorAll(q);
- app.innerHTML=`<p class="s">Νιώθεις <b>${esc(S.w)}</b>. Τι το περιβάλλει; (προαιρετικό)</p>`+ks.map((k,a)=>`<h2>${esc(k)}${EDIT?`<button class="x" data-dc="${a}">×</button>`:''}</h2><div class="chips">${C[k].map((o,b)=>`<span class="co"><button class="chip ${S.ctx[k]===o?'sel':''}" data-k="${a}" data-o="${b}">${esc(o)}</button>${EDIT?`<button class="x" data-do="${a}" data-o2="${b}">×</button>`:''}</span>`).join('')}<span class="add"><input placeholder="+ νέα επιλογή" data-a="${a}"></span></div>`).join('')+(EDIT?`<div class="card"><b>Νέα ερώτηση</b><div class="row"><input id="nc" placeholder="π.χ. Τι έφαγα" style="flex:1"><button id="ncb">Προσθήκη</button></div></div>`:'')+`<button class="t" id="ed">${EDIT?'Τέλος επεξεργασίας':'Επεξεργασία ερωτήσεων'}</button><h2>Πότε;</h2><input type="datetime-local" id="when" value="${loc(S.when||Date.now())}" max="${loc(Date.now())}"><h2>Σημείωση</h2><textarea id="note" placeholder="Τι συνέβη; Τι σκέφτεσαι;">${esc(S.note)}</textarea><button class="pri" id="ok">Αποθήκευση</button><button class="t" id="back">← Πίσω</button>`;
+ if(!Array.isArray(S.sens))S.sens=[];
+ const SN=S.sens,snHtml=`<details id="sn" ${SN.length||S.snOpen?'open':''}><summary>Στο σώμα <small>(προαιρετικό)</small></summary><p class="s" style="margin:4px 0 0">Πού το νιώθεις; Διάλεξε ό,τι ισχύει.</p>${SENSG.map(([g,L])=>`<h3 class="sg">${esc(g)}</h3><div class="chips">${L.map(o=>`<button class="chip ${SN.includes(o)?'sel':''}" data-sn="${esc(o)}">${esc(o)}</button>`).join('')}</div>`).join('')}<h3 class="sg">Δικές μου</h3><div class="chips">${SENSC.map(o=>`<span class="co"><button class="chip ${SN.includes(o)?'sel':''}" data-sn="${esc(o)}">${esc(o)}</button><button class="x" data-sd="${esc(o)}" aria-label="Διαγραφή «${esc(o)}»">×</button></span>`).join('')}<span class="add"><input placeholder="+ νέα αίσθηση" id="sna" maxlength="40"></span></div></details>`;
+ app.innerHTML=`<p class="s">Νιώθεις <b>${esc(S.w)}</b>. Τι το περιβάλλει; (προαιρετικό)</p>`+ks.map((k,a)=>`<h2>${esc(k)}${EDIT?`<button class="x" data-dc="${a}">×</button>`:''}</h2><div class="chips">${C[k].map((o,b)=>`<span class="co"><button class="chip ${S.ctx[k]===o?'sel':''}" data-k="${a}" data-o="${b}">${esc(o)}</button>${EDIT?`<button class="x" data-do="${a}" data-o2="${b}">×</button>`:''}</span>`).join('')}<span class="add"><input placeholder="+ νέα επιλογή" data-a="${a}"></span></div>`).join('')+(EDIT?`<div class="card"><b>Νέα ερώτηση</b><div class="row"><input id="nc" placeholder="π.χ. Τι έφαγα" style="flex:1"><button id="ncb">Προσθήκη</button></div></div>`:'')+`<button class="t" id="ed">${EDIT?'Τέλος επεξεργασίας':'Επεξεργασία ερωτήσεων'}</button>${snHtml}<h2>Πότε;</h2><input type="datetime-local" id="when" value="${loc(S.when||Date.now())}" max="${loc(Date.now())}"><h2>Σημείωση</h2><textarea id="note" placeholder="Τι συνέβη; Τι σκέφτεσαι;">${esc(S.note)}</textarea><button class="pri" id="ok">Αποθήκευση</button><button class="t" id="back">← Πίσω</button>`;
  $('[data-k]').forEach(e=>e.onclick=()=>{keep();const k=ks[+e.dataset.k],o=C[k][+e.dataset.o];S.ctx[k]=S.ctx[k]===o?null:o;render()});
  $('[data-a]').forEach(i=>i.onchange=()=>{const v=i.value.trim(),k=ks[+i.dataset.a];if(!v)return;keep();if(!C[k].includes(v))C[k].push(v);S.ctx[k]=v;saveC();render()});
  $('[data-do]').forEach(e=>e.onclick=()=>{keep();const k=ks[+e.dataset.do],j=+e.dataset.o2,o=C[k][j];C[k].splice(j,1);if(S.ctx[k]===o)S.ctx[k]=null;saveC();render();toast('Η επιλογή «'+o+'» διαγράφηκε',()=>{if(C[k]&&!C[k].includes(o)){C[k].splice(Math.min(j,C[k].length),0,o);saveC()}})});
  $('[data-dc]').forEach(e=>e.onclick=()=>{const a=+e.dataset.dc,k=ks[a],val=C[k],sc=S.ctx[k];keep();delete C[k];delete S.ctx[k];saveC();render();toast('Η ερώτηση «'+k+'» διαγράφηκε',()=>{if(C[k])return;const en=Object.entries(C);en.splice(Math.min(a,en.length),0,[k,val]);Object.keys(C).forEach(x=>delete C[x]);en.forEach(([x,v])=>C[x]=v);if(sc)S.ctx[k]=sc;saveC()})});
+ $('[data-sn]').forEach(e=>e.onclick=()=>{keep();S.snOpen=true;const v=e.dataset.sn,i=S.sens.indexOf(v);if(i<0)S.sens.push(v);else S.sens.splice(i,1);render()});
+ const na=document.getElementById('sna');na.onchange=()=>{const v=na.value.trim().slice(0,40);if(!v)return;keep();S.snOpen=true;if(!SENSALL().includes(v)&&!SENSC.includes(v)){SENSC.push(v);saveSN()}if(!S.sens.includes(v))S.sens.push(v);render()};
+ $('[data-sd]').forEach(e=>e.onclick=()=>{keep();S.snOpen=true;const v=e.dataset.sd,j=SENSC.indexOf(v),was=S.sens.includes(v);if(j<0)return;SENSC.splice(j,1);S.sens=S.sens.filter(x=>x!==v);saveSN();render();toast('Η αίσθηση «'+v+'» διαγράφηκε',()=>{if(!SENSC.includes(v)){SENSC.splice(Math.min(j,SENSC.length),0,v);saveSN()}if(was&&S.v==='ctx'&&!S.sens.includes(v))S.sens.push(v)})});
+ document.getElementById('sn').ontoggle=ev=>{S.snOpen=ev.target.open};
  const nb=document.getElementById('ncb');if(nb)nb.onclick=()=>{const v=document.getElementById('nc').value.trim();if(v&&!C[v]){keep();C[v]=[];saveC();render()}};
  document.getElementById('ed').onclick=()=>{keep();EDIT=!EDIT;render()};
  document.getElementById('back').onclick=()=>{S.v='word';render()};
@@ -929,7 +1125,7 @@ function ctxView(){
   let t=S.edit&&wv===loc(S.edit)?S.edit:(isNaN(w)?now:Math.min(w,now));
   if(S.edit)a=a.filter(x=>x.t!==S.edit);
   while(a.some(x=>x.t===t))t++;
-  const en={t,q:S.q,w:S.w,e:S.e,ctx:S.ctx,note:document.getElementById('note').value,...(S.from?{from:S.from,strat:S.strat||''}:{})};
+  const en={t,q:S.q,w:S.w,e:S.e,ctx:S.ctx,note:document.getElementById('note').value,...(S.sens&&S.sens.length?{sens:[...S.sens]}:{}),...(S.from?{from:S.from,strat:S.strat||''}:{})};
   if(S.edit&&S.edit!==t)a.forEach(x=>{if(x.from===S.edit)x.from=t});
   a.push(en);a.sort((x,y)=>y.t-x.t);save(a);
   if(S.edit){S={v:'home',q:null,w:null,ctx:{},note:''};nav('hist')}else{S.last=en.t;S.v='done';render()}};
@@ -973,9 +1169,217 @@ const SK='moodmeter.str.v1';
 let ST={c:{},f:{}};try{const t=JSON.parse(localStorage.getItem(SK));if(t&&t.c&&t.f)ST=t}catch(e){}
 const saveS=()=>{try{localStorage.setItem(SK,JSON.stringify(ST))}catch(e){}};
 const strs=k=>{const M2=meas(k),av=t=>M2[t]?M2[t].avg:0;return [...Q[k].s,...(ST.c[k]||[])].map((t,i)=>({t,i,u:ST.f[k+'|'+t]||[0,0]})).sort((a,b)=>(b.u[0]-b.u[1])-(a.u[0]-a.u[1])||av(b.t)-av(a.t)||a.i-b.i)};
+/* ── Ασκήσεις με οδηγό. Τα κείμενα είναι στο EXERCISES_TEXT (στην αρχή του αρχείου). Εδώ δεν χρειάζεται να αλλάξεις τίποτα. ──
+   Φτιάχνει τη λίστα EXS = [{id,kind,title,cols,intro,tip,end,dt,…}] ανάλογα με το είδος (pace / steps / timed / write). */
+const EXS=[];
+(function(){
+ const KINDS=['pace','steps','timed','write'],FL={'εισαγωγή':'intro','συμβουλή':'tip','τέλος':'end','διάρκεια':'dur','ρυθμός':'pace','βήμα':'step','πεδίο':'field','άφημα':'letgo','κράτα':'keep'},
+  warn=(n,m)=>console.warn('[Ασκήσεις] '+(n?'γραμμή '+n+': ':'')+m),
+  dtxt=s=>s<50?'≈'+Math.max(5,Math.round(s/5)*5)+' δευτ.':(m=>m===1?'≈1 λεπτό':'≈'+m+' λεπτά')(Math.max(1,Math.round(s/60)));
+ const blocks=[];let cur=null;
+ EXERCISES_TEXT.split('\n').forEach((raw,i)=>{
+  const n=i+1,t=raw.trim(),h=t.match(/^==\s*(.*?)\s*==$/);
+  if(!t||t[0]==='#')return;
+  if(h){cur={n,p:h[1].split('|').map(x=>x.trim()),f:{},steps:[],fields:[]};blocks.push(cur);return}
+  if(!cur){warn(n,'γραμμή έξω από άσκηση (πριν την πρώτη επικεφαλίδα «== … ==»)');return}
+  const m=t.match(/^([^:]+):\s*(.*)$/),f=m&&FL[m[1].trim()];
+  if(!f){warn(n,'άγνωστη ετικέτα «'+(m?m[1].trim():t)+'» (σωστές: εισαγωγή, συμβουλή, τέλος, διάρκεια, ρυθμός, βήμα, πεδίο, άφημα, κράτα)');return}
+  const v=m[2].trim();
+  if(f==='step')cur.steps.push({n,v});else if(f==='field')cur.fields.push({n,v});
+  else{if(cur.f[f])warn(n,'διπλό πεδίο «'+m[1].trim()+'»');cur.f[f]={n,v}}});
+ blocks.forEach(b=>{
+  const [id,kind,title,cs]=b.p,bad=m=>warn(b.n,'η άσκηση «'+(title||id||'?')+'» παραλείπεται: '+m),f=b.f,v=k=>f[k]?f[k].v:'';
+  if(b.p.length!==4||!id||!title)return bad('η επικεφαλίδα πρέπει να είναι «== κωδικός | είδος | Τίτλος | χρώματα ==»');
+  if(!/^[a-z0-9]+$/.test(id))return bad('ο κωδικός «'+id+'» πρέπει να έχει μόνο λατινικά πεζά και ψηφία');
+  if(EXS.some(e=>e.id===id))return bad('ο κωδικός «'+id+'» υπάρχει ήδη');
+  if(EXS.some(e=>e.title===title))return bad('ο τίτλος υπάρχει ήδη σε άλλη άσκηση');
+  if(!KINDS.includes(kind))return bad('άγνωστο είδος «'+kind+'» (σωστά: '+KINDS.join(', ')+')');
+  const all=Object.keys(Q),cols=cs==='all'?all:cs.split(',').map(x=>x.trim()).filter(Boolean);
+  if(!cols.length||cols.some(c=>!all.includes(c)))return bad('άγνωστα χρώματα «'+cs+'» (σωστά: red, yellow, blue, green ή all)');
+  const e={id,kind,title,cols,intro:v('intro'),tip:v('tip'),end:v('end')||'Πρόσεξε πώς νιώθεις τώρα.',letgo:/^ναι$/i.test(v('letgo')),keep:/^ναι$/i.test(v('keep')),dt:v('dur')};
+  if(!e.intro)warn(b.n,'«'+title+'»: λείπει η εισαγωγή');
+  let sec=0;
+  if(kind==='pace'){
+   const p=v('pace').split(/[\s,]+/).filter(Boolean).map(Number);
+   if(p.length<2||p.length>3||p.some(x=>!Number.isInteger(x)||x<1||x>30))return bad('το «ρυθμός» θέλει 2–3 ακέραιους 1–30: εισπνοή εκπνοή [κύκλοι], π.χ. 4 6 10');
+   e.pace=[p[0],p[1],p[2]||6];sec=(p[0]+p[1])*e.pace[2]}
+  else if(kind==='timed'){
+   const st=[];
+   for(const s of b.steps){const m=s.v.match(/^(\d+)\s*\|\s*(.+)$/);
+    if(!m||+m[1]<3||+m[1]>300)return bad('γραμμή '+s.n+': το βήμα πρέπει να είναι «δευτερόλεπτα (3–300) | κείμενο»');
+    st.push({s:+m[1],t:m[2]});sec+=+m[1]}
+   if(!st.length)return bad('δεν έχει βήματα');e.steps=st}
+  else if(kind==='steps'){
+   if(!b.steps.length)return bad('δεν έχει βήματα');e.steps=b.steps.map(s=>s.v)}
+  else{
+   if(!b.fields.length)return bad('δεν έχει πεδία γραψίματος');e.fields=b.fields.map(s=>s.v)}
+  if(sec)e.dt=dtxt(sec);
+  if(Q[cols[0]].s.includes(title))warn(b.n,'«'+title+'»: ο τίτλος ταυτίζεται με μια έτοιμη στρατηγική');
+  EXS.push(e)});
+})();
+
+/* Χρονόμετρο με παύση: καλεί tick(ms) κάθε 100ms· ο χρόνος μετριέται με performance.now(), άρα δεν «τρέχει» όσο είναι σε παύση */
+function clock(tick){let acc=0,t0=null,id=null,paused=false;const now=()=>performance.now(),run=()=>{t0=now();id=setInterval(()=>tick(acc+now()-t0),100)};
+ const el=()=>acc+(t0===null?0:now()-t0);
+ return{start(){run();tick(0)},pause(){if(t0===null)return;acc+=now()-t0;t0=null;paused=true;clearInterval(id)},resume(){if(!paused)return;paused=false;run()},stop(){clearInterval(id)},poke(){tick(el())},elapsed:el,get paused(){return paused}}}
+let XT=null,WL=null,WLn=0;
+const exStop=()=>{if(XT){const x=XT;XT=null;try{x.stop()}catch(e){}}unwake()};
+/* να μην σβήνει η οθόνη στο κινητό όσο τρέχει η άσκηση (αν το υποστηρίζει ο browser) */
+function wake(){const n=++WLn;try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(l=>{if(n===WLn)WL=l;else l.release().catch(()=>{})}).catch(()=>{})}catch(e){}}
+function unwake(){WLn++;try{if(WL){WL.release().catch(()=>{});WL=null}}catch(e){}}
+const REDM=()=>{try{return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)}catch(e){return false}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&XT&&XT.pause)XT.pause()});
+
+function exOpen(id,from){S.exid=id;S.xs='intro';S.exfrom=from;delete S.xk;nav('ex')}
+function exlView(){
+ app.innerHTML=`<h2>Ασκήσεις</h2><p class="s">Σύντομες ασκήσεις (1–3 λεπτών), χωρίς ήχο ή βίντεο. Διάλεξε όποια ταιριάζει με το πώς νιώθεις.</p>`+EXS.map(e=>`<div class="card"><div class="row"><b>${esc(e.title)}</b><span class="dots">${e.cols.map(c=>`<span class="dot" style="background:${Q[c].c}" title="${esc(Q[c].n)}"></span>`).join('')}</span><small style="margin-left:auto">${esc(e.dt)}</small></div><p style="margin:6px 0 0"><small>${esc(e.intro)}</small></p><button style="margin-top:10px" data-xs="${e.id}">▶ Ξεκίνα</button></div>`).join('')+`<p><small>Οι ασκήσεις είναι εργαλείο αυτοφροντίδας και δεν αντικαθιστούν επαγγελματική βοήθεια. Αν περνάς δύσκολα για καιρό, μίλησε με κάποιον που εμπιστεύεσαι ή με ειδικό.</small></p><button class="t" id="xhm">← Πίσω</button>`;
+ app.querySelectorAll('[data-xs]').forEach(b=>b.onclick=()=>exOpen(b.dataset.xs,'exl'));
+ document.getElementById('xhm').onclick=()=>nC.onclick()}
+function exView(){
+ const e=EXS.find(x=>x.id===S.exid);
+ if(!e){S={v:'home',q:null,w:null,ctx:{},note:''};render();return}
+ const acc=S.q&&Q[S.q]?Q[S.q].c:Q[e.cols[0]].c,g=id=>document.getElementById(id),
+  W=h=>`<div class="xv" style="--xa:${acc}">${h}</div>`,
+  bk=S.exfrom==='done'?'← Πίσω στις ιδέες':'← Πίσω στις ασκήσεις',
+  leave=()=>{const to=S.exfrom==='done'?'done':'exl';delete S.exid;delete S.xs;delete S.xk;nav(to)},
+  fin=()=>{S.xs='end';S.tried=e.title;render()},
+  head=`<div class="card"><div class="row"><span class="dot" style="background:${acc}"></span><b>${esc(e.title)}</b><small style="margin-left:auto">${esc(e.dt)}</small></div></div>`;
+ if(S.xs==='intro'){
+  app.innerHTML=W(`<div class="card"><div class="row"><span class="dot" style="background:${acc}"></span><b>${esc(e.title)}</b><small style="margin-left:auto">${esc(e.dt)}</small></div><p style="margin:8px 0 0">${esc(e.intro)}</p>${e.tip?`<p style="margin:8px 0 0"><small>${esc(e.tip)}</small></p>`:''}${e.kind==='write'?'<p style="margin:8px 0 0"><small>Ό,τι γράψεις εδώ δεν αποθηκεύεται πουθενά.</small></p>':''}</div><button class="pri" id="xgo">▶ Ξεκίνα</button><button class="t" id="xbk">${bk}</button>`);
+  g('xgo').onclick=()=>{S.xs='run';render()};g('xbk').onclick=leave;return}
+ if(S.xs==='end'){
+  const kept=(S.xk||[]).map(([p,t])=>`<div class="card"><small>${esc(p)}</small><p style="margin:4px 0 0;white-space:pre-wrap">${esc(t)}</p></div>`).join('');
+  app.innerHTML=W(`<div class="card"><div class="row"><span class="dot" style="background:${acc}"></span><b>✓ ${esc(e.title)}</b></div><p style="margin:8px 0 0">${esc(e.end)}</p></div>${kept?`<h2>Αυτό που έγραψες</h2><p class="s">Δεν αποθηκεύεται· θα χαθεί μόλις φύγεις από εδώ.</p>${kept}`:''}<button class="pri" id="xfu">Πώς νιώθεις τώρα;</button><div class="acts"><button class="t" id="xag">Ξανά</button><button class="t" id="xbk">${bk}</button></div>`);
+  g('xfu').onclick=()=>{const fu={strat:e.title};if(S.exfrom==='done'&&S.last)fu.from=S.last;S={v:'home',q:null,w:null,ctx:{},note:'',fu};nav('home')};
+  g('xag').onclick=()=>{delete S.xk;S.xs='run';render()};g('xbk').onclick=leave;return}
+ /* S.xs==='run' */
+ const RM=REDM(),stopBtn=`<button class="t" id="xbk">${bk}</button>`;
+ if(e.kind==='pace'){
+  const [a,b,cy]=e.pace,L=a+b,total=L*cy;
+  app.innerHTML=W(`${head}<div class="xw"><div class="xc" id="xc"${RM?' style="transform:scale(.85)"':''}></div><div class="xt"><div id="xl" class="xl" aria-live="polite">Ετοιμάσου</div><b id="xn" aria-hidden="true"></b></div></div><p class="s" id="xk" style="text-align:center"></p><div class="xb"><i id="xp"></i></div><div class="row"><button id="xps" style="flex:1">Παύση</button><button id="xst" style="flex:1">Τέλος νωρίτερα</button></div>${stopBtn}`);
+  const c=g('xc'),lab=g('xl'),num=g('xn'),ck=g('xk'),pb=g('xp'),pbtn=g('xps');let last=-1;
+  const clk=clock(ms=>{const T=ms/1000;if(T>=total){fin();return}
+   const cyc=Math.floor(T/L),w=T-cyc*L,inh=w<a,ph=cyc*2+(inh?0:1),rem=inh?a-w:L-w;
+   if(ph!==last){last=ph;lab.textContent=inh?'Εισπνοή':'Εκπνοή';if(!RM){void c.offsetWidth;c.style.transition='transform '+rem.toFixed(2)+'s ease-in-out';c.style.transform='scale('+(inh?1:.6)+')'}}
+   num.textContent=Math.ceil(rem);ck.textContent='Κύκλος '+(cyc+1)+' από '+cy;pb.style.width=(T/total*100)+'%'});
+  const toggle=()=>{if(clk.paused){clk.resume();wake();last=-1;pbtn.textContent='Παύση'}else{clk.pause();if(!RM){c.style.transition='none';c.style.transform=getComputedStyle(c).transform}lab.textContent='Παύση';pbtn.textContent='Συνέχεια'}};
+  pbtn.onclick=toggle;g('xst').onclick=fin;g('xbk').onclick=leave;
+  XT={stop(){clk.stop()},pause(){if(!clk.paused)toggle()}};wake();clk.start();return}
+ if(e.kind==='timed'){
+  const st=e.steps,starts=[];let tot=0;st.forEach(x=>{starts.push(tot);tot+=x.s});let off=0,cur=-1;
+  app.innerHTML=W(`${head}<div class="card" style="text-align:center"><small id="xk"></small><p class="xtx" id="xtx" aria-live="polite"></p><b id="xn" aria-hidden="true"></b></div><div class="xb"><i id="xp"></i></div><div class="row"><button id="xps" style="flex:1">Παύση</button><button id="xnx" style="flex:1">Παράλειψη →</button></div><div class="acts"><button class="t" id="xst">Τέλος νωρίτερα</button>${stopBtn}</div>`);
+  const kk=g('xk'),tx=g('xtx'),num=g('xn'),pb=g('xp'),pbtn=g('xps');
+  const clk=clock(ms=>{const T=ms/1000+off;if(T>=tot){fin();return}
+   let i=st.length-1;while(i>0&&starts[i]>T)i--;
+   if(i!==cur){cur=i;kk.textContent='Βήμα '+(i+1)+' από '+st.length;tx.textContent=st[i].t}
+   num.textContent=Math.ceil(st[i].s-(T-starts[i]))+' δευτ.';pb.style.width=(T/tot*100)+'%'});
+  const toggle=()=>{if(clk.paused){clk.resume();wake();pbtn.textContent='Παύση'}else{clk.pause();pbtn.textContent='Συνέχεια'}};
+  pbtn.onclick=toggle;
+  g('xnx').onclick=()=>{if(clk.paused)toggle();const T=clk.elapsed()/1000+off;off+=starts[cur]+st[cur].s-T+.001;clk.poke()};
+  g('xst').onclick=fin;g('xbk').onclick=leave;
+  XT={stop(){clk.stop()},pause(){if(!clk.paused)toggle()}};wake();clk.start();return}
+ if(e.kind==='steps'){
+  const st=e.steps;let i=0;wake();XT={stop(){}};
+  const draw=()=>{app.innerHTML=W(`${head}<div class="card" style="text-align:center"><small>Βήμα ${i+1} από ${st.length}</small><p class="xtx" aria-live="polite">${esc(st[i])}</p></div><div class="xd">${st.map((_,j)=>`<i class="${j<=i?'on':''}"></i>`).join('')}</div><div class="row"><button id="xpv" style="flex:1"${i?'':' disabled'}>← Πίσω</button><button id="xnx" class="pri" style="flex:2;margin-top:0;width:auto">${i<st.length-1?'Επόμενο →':'Τέλος ✓'}</button></div>${stopBtn}`);
+   g('xpv').onclick=()=>{if(i>0){i--;draw()}};
+   g('xnx').onclick=()=>{if(i<st.length-1){i++;draw()}else fin()};
+   g('xbk').onclick=leave;try{g('xnx').focus({preventScroll:true})}catch(x){}};
+  draw();return}
+ /* write */
+ const fs=e.fields;let tm=0;XT={stop(){clearTimeout(tm)}};
+ app.innerHTML=W(`${head}<div class="card" id="xwc">${fs.map((p,j)=>`<label for="xf${j}">${esc(p)}</label><textarea id="xf${j}" rows="${fs.length>2?3:5}" style="margin:6px 0 14px"></textarea>`).join('')}<small>Δεν αποθηκεύεται πουθενά.</small></div><button class="pri" id="xok">${e.letgo?'Άφησέ το να φύγει':'Έτοιμο'}</button>${stopBtn}`);
+ const tas=fs.map((_,j)=>g('xf'+j));
+ g('xbk').onclick=leave;
+ g('xok').onclick=()=>{
+  S.xk=e.keep?fs.map((p,j)=>[p,tas[j].value.trim()]).filter(x=>x[1]):undefined;if(!S.xk)delete S.xk;
+  if(e.letgo&&!RM){g('xok').disabled=true;g('xwc').classList.add('go');tm=setTimeout(()=>{tas.forEach(t=>{t.value=''});fin()},1500)}
+  else{if(e.letgo)tas.forEach(t=>{t.value=''});fin()}};
+ try{tas[0].focus({preventScroll:true})}catch(x){}}
+
+const XH=(k,MS)=>{const L=EXS.filter(e=>e.cols.includes(k));return L.length?`<h2>Ασκήσεις με οδηγό</h2><p class="s">Σύντομες, χωρίς ήχο ή βίντεο. Πάτησε «Ξεκίνα» και ακολούθησε τις οδηγίες.</p>`+L.map(e=>`<div class="card"><div class="row"><b>${esc(e.title)}</b><small style="margin-left:auto">${esc(e.dt)}</small></div><p style="margin:6px 0 0"><small>${esc(e.intro)}</small></p>${MS[e.title]?`<small>Μέση μεταβολή ευχάριστου μετά: ${fmt(MS[e.title].avg)} (${MS[e.title].n}×)</small><br>`:''}${S.tried===e.title?'<small>✓ Την έκανες τώρα</small><br>':''}<button style="margin-top:10px" data-xs="${e.id}">▶ ${S.tried===e.title?'Ξανά':'Ξεκίνα'}</button></div>`).join(''):''};
+/* ── «Η μέρα μου»: καθημερινοί παράγοντες (ύπνος, κίνηση…). Τα κείμενα είναι στο FACTORS_TEXT (στην αρχή του αρχείου). Εδώ δεν χρειάζεται να αλλάξεις τίποτα. ──
+   Αποθήκευση: moodmeter.day.v1 = { 'ΕΕΕΕ-ΜΜ-ΗΗ': { κωδικόςΠαράγοντα: 'κείμενο επιλογής' } }, ανά ημερολογιακή ημέρα (τοπική ώρα). */
+const FAC=[];
+(function(){
+ const FL={'ερώτηση':'q','βοήθεια':'hint','επιλογές':'opts'},warn=(n,m)=>console.warn('[Παράγοντες ημέρας] '+(n?'γραμμή '+n+': ':'')+m),blocks=[];let cur=null;
+ FACTORS_TEXT.split('\n').forEach((raw,i)=>{
+  const n=i+1,t=raw.trim(),h=t.match(/^==\s*(.*?)\s*==$/);
+  if(!t||t[0]==='#')return;
+  if(h){cur={n,p:h[1].split('|').map(x=>x.trim()),f:{}};blocks.push(cur);return}
+  if(!cur){warn(n,'γραμμή έξω από παράγοντα (πριν την πρώτη επικεφαλίδα «== … ==»)');return}
+  const m=t.match(/^([^:]+):\s*(.*)$/),f=m&&FL[m[1].trim()];
+  if(!f){warn(n,'άγνωστη ετικέτα «'+(m?m[1].trim():t)+'» (σωστές: ερώτηση, βοήθεια, επιλογές)');return}
+  if(cur.f[f])warn(n,'διπλό πεδίο «'+m[1].trim()+'»');
+  cur.f[f]={n,v:m[2].trim()}});
+ blocks.forEach(b=>{
+  const [id,kind,label]=b.p,bad=m=>warn(b.n,'ο παράγοντας «'+(label||id||'?')+'» παραλείπεται: '+m),v=k=>b.f[k]?b.f[k].v:'';
+  if(b.p.length!==3||!id||!label)return bad('η επικεφαλίδα πρέπει να είναι «== κωδικός | ordered ή category | Όνομα ==»');
+  if(!/^[a-z0-9]{1,20}$/.test(id))return bad('ο κωδικός «'+id+'» πρέπει να έχει μόνο λατινικά πεζά και ψηφία (έως 20)');
+  if(FAC.some(x=>x.id===id))return bad('ο κωδικός «'+id+'» υπάρχει ήδη');
+  if(kind!=='ordered'&&kind!=='category')return bad('άγνωστο είδος «'+kind+'» (σωστά: ordered, category)');
+  if(!v('q'))return bad('λείπει η ερώτηση');
+  const opts=v('opts').split('|').map(x=>x.trim());
+  if(opts.length<2||opts.length>8)return bad('οι επιλογές πρέπει να είναι 2–8, χωρισμένες με |');
+  if(opts.some(o=>!o||o.length>28))return bad('κάθε επιλογή πρέπει να έχει 1–28 χαρακτήρες');
+  if(new Set(opts).size!==opts.length)return bad('υπάρχουν διπλές επιλογές');
+  FAC.push({id,kind,label,q:v('q'),hint:v('hint'),opts})});
+ if(!FAC.length)warn(0,'δεν βρέθηκε κανένας έγκυρος παράγοντας· η λειτουργία «Η μέρα μου» θα κρυφτεί');
+})();
+const pad2=n=>String(n).padStart(2,'0'),ymd=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())},
+ ymdT=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])},addD=(s,n)=>{const d=ymdT(s);d.setDate(d.getDate()+n);return ymd(d)},
+ dKey=/^\d{4}-\d{2}-\d{2}$/,dLab=s=>{const td=ymd(Date.now());return (s===td?'Σήμερα · ':s===addD(td,-1)?'Χθες · ':'')+ymdT(s).toLocaleDateString('el-GR',{weekday:'short',day:'numeric',month:'short',year:s.slice(0,4)===td.slice(0,4)?undefined:'numeric'})};
+const cleanDays=o=>{const r={};if(o&&typeof o==='object'&&!Array.isArray(o))Object.keys(o).forEach(d=>{if(!dKey.test(d)||ymd(ymdT(d))!==d)return;const v=o[d];if(!v||typeof v!=='object'||Array.isArray(v))return;const w={};Object.keys(v).forEach(k=>{if(/^[a-z0-9]{1,20}$/.test(k)&&typeof v[k]==='string'&&v[k].trim())w[k]=v[k].trim().slice(0,40)});if(Object.keys(w).length)r[d]=w});return r};
+const DK='moodmeter.day.v1';let DAYS={};try{DAYS=cleanDays(JSON.parse(localStorage.getItem(DK)))}catch(e){}
+const saveDays=()=>{try{localStorage.setItem(DK,JSON.stringify(DAYS))}catch(e){}};
+const facN=d=>{const V=DAYS[d]||{};return FAC.filter(f=>f.opts.includes(V[f.id])).length};
+/* Ενδείξεις: μέση ευχάριστη διάθεση (−5…+5) κάθε ημέρας με καταγραφές, ανά απάντηση παράγοντα. Προστατευτικά όρια: */
+const FMIN=10,GMIN=3,FDIFF=1; /* FMIN: ελάχιστες ημέρες δεδομένων· GMIN: ελάχιστες ημέρες σε κάθε ομάδα που συγκρίνεται· FDIFF: ελάχιστη διαφορά (μονάδες) για να θεωρηθεί ουσιαστική */
+function facIns(){
+ const m={};load().forEach(x=>{const d=ymd(x.t),r=m[d]=m[d]||{n:0,s:0};r.n++;r.s+=pos(x).x});
+ const rows=Object.keys(DAYS).filter(d=>m[d]&&FAC.some(f=>f.opts.includes(DAYS[d][f.id]))).map(d=>({d,x:m[d].s/m[d].n,V:DAYS[d]})),nd=rows.length;
+ if(nd<FMIN)return{nd,items:null};
+ const mean=a=>a.reduce((s,r)=>s+r.x,0)/a.length;
+ return{nd,items:FAC.map(f=>{
+  const R=rows.filter(r=>f.opts.includes(r.V[f.id])).map(r=>({i:f.opts.indexOf(r.V[f.id]),x:r.x}));let G=[];
+  if(f.kind==='ordered'){let best=null;
+   for(let c=0;c<f.opts.length-1;c++){const lo=R.filter(r=>r.i<=c),hi=R.filter(r=>r.i>c),mn=Math.min(lo.length,hi.length);if(mn>=GMIN&&(!best||mn>best.mn))best={c,lo,hi,mn}}
+   if(best){const o=f.opts[best.c+1];G=[{name:'κάτω από «'+o+'»',n:best.lo.length,m:mean(best.lo)},{name:'«'+o+'» και πάνω',n:best.hi.length,m:mean(best.hi)}]}}
+  else{f.opts.forEach((o,i)=>{const g=R.filter(r=>r.i===i);if(g.length>=GMIN)G.push({name:'«'+o+'»',n:g.length,m:mean(g)})});if(G.length<2)G=[]}
+  if(!G.length)return{f,n:R.length,st:'few',text:R.length?'Δεν υπάρχει ακόμα αρκετή ποικιλία: χρειάζονται τουλάχιστον '+GMIN+' ημέρες σε κάθε ομάδα που συγκρίνεται (έχεις '+R.length+' ημέρες με απάντηση).':'Δεν υπάρχουν ακόμα απαντήσεις σε αυτόν τον παράγοντα.'};
+  const top=G.reduce((a,b)=>b.m>a.m?b:a),bot=G.reduce((a,b)=>b.m<a.m?b:a),diff=top.m-bot.m;
+  return diff>=FDIFF?{f,n:R.length,st:'ok',G,diff,text:'Όταν η απάντηση ήταν '+top.name+', η διάθεσή σου ήταν πιο ευχάριστη κατά '+(Math.round(diff*10)/10)+' μονάδες σε σχέση με όταν ήταν '+bot.name+'.'}
+   :{f,n:R.length,st:'flat',G,diff,text:'Δεν φαίνεται ουσιαστική διαφορά στη διάθεσή σου (κάτω από '+FDIFF+' μονάδα) ανάμεσα σε αυτές τις ομάδες ημερών.'}})}}
+const facBars=G=>G.map(g=>`<div class="row" style="margin-top:6px;gap:8px"><small style="flex:none;width:42%">${esc(g.name)}<br>${g.n} ${g.n===1?'ημέρα':'ημέρες'}</small><div class="fb" style="flex:1"><i style="left:${g.m<0?50+Math.max(g.m,-5)*10:50}%;width:${Math.min(Math.abs(g.m),5)*10}%"></i></div><b style="flex:none;width:3.2em;text-align:right">${fmt(g.m)}</b></div>`).join('');
+const facNote='Βασίζεται στη μέση ευχάριστη διάθεση κάθε ημέρας (από −5 έως +5), μόνο για ημέρες που έχουν και καταγραφές διάθεσης και απαντήσεις. Είναι ενδείξεις, όχι αιτίες: ο ίδιος παράγοντας μπορεί να είναι και συνέπεια της διάθεσης (π.χ. λιγότερη κίνηση όταν νιώθεις χάλια).';
+function facInsHtml(){
+ const I=facIns();
+ if(!I.items)return `<div class="card"><b>Ημέρες με δεδομένα: ${I.nd} από ${FMIN}</b><div class="xb" style="--xa:var(--fg)"><i style="width:${I.nd/FMIN*100}%"></i></div><small>Συμπλήρωσε «Η μέρα μου» και κάνε τουλάχιστον μία καταγραφή διάθεσης την ίδια ημέρα. Όταν φτάσεις τις ${FMIN} ημέρες, θα εμφανιστούν οι πρώτες ενδείξεις. Για πιο αξιόπιστα συμπεράσματα χρειάζονται συνήθως αρκετές εβδομάδες.</small></div>`;
+ return `<p class="s">${I.nd} ημέρες με δεδομένα. ${facNote}</p>`+I.items.map(it=>`<div class="card"><div class="row"><b>${esc(it.f.label)}</b><small style="margin-left:auto">${it.n} ημέρες</small></div><p style="margin:6px 0 0">${esc(it.text)}</p>${it.G?facBars(it.G):''}</div>`).join('');
+}
+function dayView(){
+ const td=ymd(Date.now()),d=S.dd&&dKey.test(S.dd)&&S.dd<=td?S.dd:td,V=DAYS[d]||{},g=id=>document.getElementById(id);S.dd=d;
+ app.innerHTML=`<h2>Η μέρα μου</h2><p class="s">Λίγοι παράγοντες που συχνά επηρεάζουν τη διάθεση. Αποθηκεύονται αυτόματα, μόνο στον browser σου.</p><div class="pn"><button id="dp" aria-label="Προηγούμενη ημέρα">‹</button><b>${esc(dLab(d))}</b><button id="dn" aria-label="Επόμενη ημέρα" ${d>=td?'disabled':''}>›</button></div><div class="row" style="margin:8px 0"><label for="dpk">Άλλη ημέρα:</label><input type="date" id="dpk" value="${d}" max="${td}"></div>`
+  +FAC.map((f,fi)=>`<div class="card"><b>${esc(f.q)}</b>${f.hint?`<br><small>${esc(f.hint)}</small>`:''}<div class="chips" style="margin-top:8px">${f.opts.map((o,j)=>`<button class="chip ${V[f.id]===o?'sel':''}" data-f="${fi}" data-o="${j}" aria-pressed="${V[f.id]===o}">${esc(o)}</button>`).join('')}</div></div>`).join('')
+  +`<div class="row"><small>${facN(d)} από ${FAC.length} συμπληρωμένα</small>${DAYS[d]?'<button class="t" id="dc" style="margin-left:auto">Καθαρισμός ημέρας</button>':''}</div><h2>Τι φαίνεται να επηρεάζει τη διάθεσή σου</h2>${facInsHtml()}<button class="t" id="dbk">← Πίσω</button>`;
+ app.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const f=FAC[+b.dataset.f],o=f.opts[+b.dataset.o],W=DAYS[d]=DAYS[d]||{};if(W[f.id]===o)delete W[f.id];else W[f.id]=o;if(!Object.keys(W).length)delete DAYS[d];saveDays();render()});
+ g('dp').onclick=()=>{S.dd=addD(d,-1);render()};
+ g('dn').onclick=()=>{if(d<td){S.dd=addD(d,1);render()}};
+ g('dpk').onchange=()=>{const v=g('dpk').value;if(dKey.test(v)&&v<=td){S.dd=v;render()}};
+ const c=g('dc');if(c)c.onclick=()=>{const old=DAYS[d];delete DAYS[d];saveDays();render();toast('Η ημέρα καθαρίστηκε',()=>{if(!DAYS[d]){DAYS[d]=old;saveDays()}})};
+ g('dbk').onclick=()=>S.dfrom==='hist'?nav('hist'):nC.onclick()}
+const dayOpen=(d,from)=>{S={v:'day',ctx:{},note:'',dd:d,dfrom:from};nav('day')};
+const homeDay=()=>{if(!FAC.length)return '';const n=facN(ymd(Date.now()));return `<div class="card"><div class="row"><div><b>Η μέρα μου</b><br><small>${n>=FAC.length?'✓ Συμπληρώθηκε σήμερα':n?n+' από '+FAC.length+' σήμερα':'Ύπνος, κίνηση, ηρεμία… (30″)'}</small></div><button id="dh" style="margin-left:auto">${n>=FAC.length?'Άνοιγμα':'Συμπλήρωσε'}</button></div></div>`};
+const dayCard=d=>{if(!facN(d))return '';const V=DAYS[d];return `<div class="card"><small>Η μέρα μου: ${FAC.filter(f=>f.opts.includes(V[f.id])).map(f=>esc(f.label)+' <b>'+esc(V[f.id])+'</b>').join(' · ')}</small><div class="acts"><button class="t" data-dy="${d}">Επεξεργασία</button></div></div>`};
+function dayReport(s,e){
+ if(!FAC.length)return '';const ds=[];for(let d=ymd(s);d<ymd(e);d=addD(d,1))if(facN(d))ds.push(d);
+ const I=facIns();if(!ds.length&&!I.nd)return '';
+ const cell='border:1px solid var(--bd);padding:4px 6px;text-align:left;vertical-align:top',
+  tb=ds.length?`<table style="border-collapse:collapse;width:100%;font-size:.85rem"><tr><th style="${cell}">Ημέρα</th>${FAC.map(f=>`<th style="${cell}">${esc(f.label)}</th>`).join('')}</tr>${ds.map(d=>`<tr><td style="${cell}">${esc(ymdT(d).toLocaleDateString('el-GR',{weekday:'short',day:'numeric',month:'short',year:'numeric'}))}</td>${FAC.map(f=>`<td style="${cell}">${f.opts.includes((DAYS[d]||{})[f.id])?esc(DAYS[d][f.id]):'–'}</td>`).join('')}</tr>`).join('')}</table>`:'<p>Δεν υπάρχουν απαντήσεις «Η μέρα μου» σε αυτή την περίοδο.</p>';
+ const ins=I.items?'<h3>Ενδείξεις (όλες οι ημέρες)</h3><p><small>'+facNote+'</small></p>'+I.items.map(it=>`<p style="margin:0 0 6px"><b>${esc(it.f.label)}</b>: ${esc(it.text)}${it.G?'<br><small>'+it.G.map(g=>esc(g.name)+' → '+fmt(g.m)+' ('+g.n+' ημ.)').join(' · ')+'</small>':''}</p>`).join(''):`<p><small>Ενδείξεις: χρειάζονται τουλάχιστον ${FMIN} ημέρες με δεδομένα (έχεις ${I.nd}).</small></p>`;
+ return tb+ins}
 function doneView(){
  const k=S.q,L=strs(k),n0=Q[k].s.length,MS=meas(k),g=id=>document.getElementById(id);
- app.innerHTML=`<div class="card"><div class="row"><span class="dot" style="background:${Q[k].c}"></span><b>Νιώθεις ${esc(S.w)}</b></div></div><h2>Ιδέες για τώρα</h2><p class="s">Όσες σε βοήθησαν στο παρελθόν εμφανίζονται πρώτες.</p>`+L.map((x,j)=>`<div class="card">${esc(x.t)}${MS[x.t]?`<br><small>Μέση μεταβολή ευχάριστου μετά: ${fmt(MS[x.t].avg)} (${MS[x.t].n}×)</small>`:''}<div class="row" style="margin-top:8px;flex-wrap:wrap"><button data-y="${j}">👍 Με βοήθησε${x.u[0]?' ('+x.u[0]+')':''}</button><button data-n="${j}">👎 Όχι${x.u[1]?' ('+x.u[1]+')':''}</button><button data-t="${j}">Δοκίμασα</button>${x.i>=n0?`<button class="x" data-r="${j}">×</button>`:''}</div></div>`).join('')+`<div class="card"><b>Η δική μου στρατηγική</b><div class="row" style="margin-top:8px"><input id="ns" placeholder="π.χ. Μια βόλτα με μουσική" style="flex:1"><button id="nsb">Προσθήκη</button></div></div><button class="pri" id="fu">Πώς νιώθεις τώρα;</button><button class="t" id="new">Νέα καταγραφή</button>`;
+ app.innerHTML=`<div class="card"><div class="row"><span class="dot" style="background:${Q[k].c}"></span><b>Νιώθεις ${esc(S.w)}</b></div></div><h2>Ιδέες για τώρα</h2><p class="s">Όσες σε βοήθησαν στο παρελθόν εμφανίζονται πρώτες.</p>`+L.map((x,j)=>`<div class="card">${esc(x.t)}${MS[x.t]?`<br><small>Μέση μεταβολή ευχάριστου μετά: ${fmt(MS[x.t].avg)} (${MS[x.t].n}×)</small>`:''}<div class="row" style="margin-top:8px;flex-wrap:wrap"><button data-y="${j}">👍 Με βοήθησε${x.u[0]?' ('+x.u[0]+')':''}</button><button data-n="${j}">👎 Όχι${x.u[1]?' ('+x.u[1]+')':''}</button><button data-t="${j}">Δοκίμασα</button>${x.i>=n0?`<button class="x" data-r="${j}">×</button>`:''}</div></div>`).join('')+XH(k,MS)+`<div class="card"><b>Η δική μου στρατηγική</b><div class="row" style="margin-top:8px"><input id="ns" placeholder="π.χ. Μια βόλτα με μουσική" style="flex:1"><button id="nsb">Προσθήκη</button></div></div><button class="pri" id="fu">Πώς νιώθεις τώρα;</button><button class="t" id="new">Νέα καταγραφή</button>`;
  const bump=(j,t)=>{const key=k+'|'+L[j].t;(ST.f[key]=ST.f[key]||[0,0])[t]++;saveS()};
  app.querySelectorAll('[data-y]').forEach(b=>b.onclick=()=>{bump(+b.dataset.y,0);b.textContent='👍 Σημειώθηκε';b.disabled=true});
  app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{bump(+b.dataset.n,1);b.textContent='👎 Σημειώθηκε';b.disabled=true});
@@ -983,6 +1387,7 @@ function doneView(){
  const add=()=>{const v=g('ns').value.trim();if(v&&!L.some(x=>x.t===v)){ST.c[k]=[...(ST.c[k]||[]),v];saveS();render()}};
  g('nsb').onclick=add;g('ns').onchange=add;
  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.tried=L[+b.dataset.t].t;app.querySelectorAll('[data-t]').forEach(c=>c.classList.remove('on'));b.classList.add('on')});
+ app.querySelectorAll('[data-xs]').forEach(b=>b.onclick=()=>exOpen(b.dataset.xs,'done'));
  g('fu').onclick=()=>{const fu={from:S.last,strat:S.tried||''};S={v:'home',q:null,w:null,ctx:{},note:'',fu};nav('home')};
  g('new').onclick=()=>nC.onclick();
 }
@@ -1000,9 +1405,9 @@ function meas(k,list){const all=list||load(),by=new Map(all.map(x=>[x.t,x])),m={
  all.forEach(f=>{if(!f.from||!f.strat)return;const o=by.get(f.from);if(!o||o.q!==k)return;const r=m[f.strat]=m[f.strat]||{n:0,s:0};r.n++;r.s+=pos(f).x-pos(o).x});
  Object.values(m).forEach(r=>r.avg=r.s/r.n);return m}
 function saveFollow(){const a=load();
- if(S.fu.from&&a.some(x=>x.from===S.fu.from)){alert('Σε αυτό το συναίσθημα έχει ήδη καταγραφεί στρατηγική. Μπορείς να προσθέσεις στρατηγική μόνο στο νέο συναίσθημα που προέκυψε.');S={v:'home',q:null,w:null,ctx:{},note:''};nav('hist');return}let t=S.fu.when||Date.now();while(a.some(x=>x.t===t))t++;const en={t,q:S.q,w:S.w,e:S.e,ctx:{},note:'',from:S.fu.from,strat:S.fu.strat};a.push(en);a.sort((x,y)=>y.t-x.t);save(a);S.v='result';S.res=en;render()}
+ if(S.fu.from&&a.some(x=>x.from===S.fu.from)){alert('Σε αυτό το συναίσθημα έχει ήδη καταγραφεί στρατηγική. Μπορείς να προσθέσεις στρατηγική μόνο στο νέο συναίσθημα που προέκυψε.');S={v:'home',q:null,w:null,ctx:{},note:''};nav('hist');return}let t=S.fu.when||Date.now();while(a.some(x=>x.t===t))t++;const en={t,q:S.q,w:S.w,e:S.e,ctx:{},note:'',strat:S.fu.strat};if(S.fu.from)en.from=S.fu.from;a.push(en);a.sort((x,y)=>y.t-x.t);save(a);S.v='result';S.res=en;render()}
 function resultView(){const f=S.res,o=load().find(x=>x.t===f.from),nw=()=>{document.getElementById('nw').onclick=()=>nC.onclick()};
- if(!o){app.innerHTML=`<div class="card"><b>Νιώθεις ${esc(f.w)}</b></div><button class="pri" id="nw">Νέα καταγραφή</button>`;nw();return}
+ if(!o){app.innerHTML=`<div class="card"><b>Νιώθεις ${esc(f.w)}</b>${f.strat?`<br><small>Μετά από: ${esc(f.strat)}</small>`:''}</div><button class="pri" id="nw">Νέα καταγραφή</button>`;nw();return}
  const a=pos(o),b=pos(f),dx=b.x-a.x,dy=b.y-a.y;
  app.innerHTML=`<div class="card"><div class="row"><span class="dot" style="background:${Q[o.q].c}"></span><b>${esc(o.w)}</b><span>→</span><span class="dot" style="background:${Q[f.q].c}"></span><b>${esc(f.w)}</b></div>${f.strat?`<small>Μετά από: ${esc(f.strat)}</small>`:''}<p style="margin:8px 0 0">${dx>0?'Η διάθεσή σου έγινε πιο ευχάριστη ('+fmt(dx)+').':dx<0?'Νιώθεις πιο δυσάρεστα ('+fmt(dx)+'). Ίσως χρειάζεται άλλος τρόπος ή περισσότερος χρόνος.':'Το πόσο ευχάριστα νιώθεις έμεινε ίδιο.'} ${dy>0?'Η ενέργειά σου αυξήθηκε.':dy<0?'Η ενέργειά σου μειώθηκε.':''}</p></div><button class="pri" id="nw">Νέα καταγραφή</button><button class="t" id="und">Αναίρεση: διάλεξα λάθος</button>`;nw();
  document.getElementById('und').onclick=()=>{save(load().filter(x=>x.t!==f.t));S={v:'home',q:null,w:null,ctx:{},note:''};nav('hist');toast('Ο επανέλεγχος αναιρέθηκε',()=>{const a=load();if(!a.some(y=>y.t===f.t))a.push(f);a.sort((p,q)=>q.t-p.t);save(a)})}}
@@ -1055,11 +1460,12 @@ function reportBody(a,s,e,o){let h=`<h1>Αναφορά διάθεσης</h1><p>$
  const B=buckets(s);
  if(o.rev)h+='<h2>Ανασκόπηση</h2>'+review(a);
  if(o.ch)h+='<h2>Πίνακας διάθεσης</h2>'+heat(a)+'<h2>Τάση</h2>'+trend(a,B.bi,B.nb);
- if(o.li)h+='<h2>Καταγραφές</h2>'+a.map(x=>{const cx=o.cx?Object.values(x.ctx||{}).filter(Boolean).join(' · '):'';return `<div class="card"><div class="row"><span class="dot" style="background:${Q[x.q].c}"></span><b>${esc(x.w)}</b>${x.e?`<small>${esc(x.e)}</small>`:''}<small style="margin-left:auto">${new Date(x.t).toLocaleString('el-GR',{dateStyle:'short',timeStyle:'short'})}</small></div>${x.from?'<small>Επανέλεγχος'+(x.strat?' μετά από «'+esc(x.strat)+'»':'')+'</small><br>':''}${cx?`<small>${esc(cx)}</small>`:''}${o.nt&&x.note?`<p style="margin:6px 0 0">${esc(x.note)}</p>`:''}</div>`}).join('');
+ if(o.dy){const r=dayReport(s,e);if(r)h+='<h2>Η μέρα μου</h2>'+r}
+ if(o.li)h+='<h2>Καταγραφές</h2>'+a.map(x=>{const cx=o.cx?Object.values(x.ctx||{}).filter(Boolean).join(' · '):'';return `<div class="card"><div class="row"><span class="dot" style="background:${Q[x.q].c}"></span><b>${esc(x.w)}</b>${x.e?`<small>${esc(x.e)}</small>`:''}<small style="margin-left:auto">${new Date(x.t).toLocaleString('el-GR',{dateStyle:'short',timeStyle:'short'})}</small></div>${x.from?'<small>Επανέλεγχος'+(x.strat?' μετά από «'+esc(x.strat)+'»':'')+'</small><br>':x.strat?'<small>Μετά από «'+esc(x.strat)+'»</small><br>':''}${cx?`<small>${esc(cx)}</small>`:''}${o.sn&&sx(x).length?`<div><small>Στο σώμα: ${esc(sx(x).join(' · '))}</small></div>`:''}${o.nt&&x.note?`<p style="margin:6px 0 0">${esc(x.note)}</p>`:''}</div>`}).join('');
  return h}
-function reportView(){const[s,e]=range(),a=load().filter(x=>x.t>=s&&x.t<e),o=S.rp||(S.rp={rev:1,ch:1,li:1,cx:1,nt:0});
+function reportView(){const[s,e]=range(),a=load().filter(x=>x.t>=s&&x.t<e),o=S.rp||(S.rp={rev:1,ch:1,li:1,cx:1,sn:1,dy:1,nt:0});
  const chk=(k,t)=>`<label class="ck2"><input type="checkbox" data-rk="${k}" ${o[k]?'checked':''}> ${t}</label>`;
- app.innerHTML=`<h2>Αναφορά: ${esc(label(s,e))}</h2><div class="card">${chk('rev','Ανασκόπηση')}${chk('ch','Πίνακας διάθεσης και τάση')}${chk('li','Λίστα καταγραφών')}${chk('cx','Πλαίσιο (με ποιον, τι κάνω, πού)')}${chk('nt','Σημειώσεις')}<div class="row" style="margin-top:10px;flex-wrap:wrap"><button id="rd">Λήψη αναφοράς (HTML)</button></div><small>Η περίοδος είναι αυτή που έχεις επιλέξει στο Ιστορικό. Το αρχείο HTML ανοίγει σε οποιονδήποτε browser και τυπώνεται ή αποθηκεύεται ως PDF.</small></div><div class="rp">${reportBody(a,s,e,o)}</div><button class="t" id="bkr">← Πίσω στο ιστορικό</button>`;
+ app.innerHTML=`<h2>Αναφορά: ${esc(label(s,e))}</h2><div class="card">${chk('rev','Ανασκόπηση')}${chk('ch','Πίνακας διάθεσης και τάση')}${chk('li','Λίστα καταγραφών')}${chk('cx','Πλαίσιο (με ποιον, τι κάνω, πού)')}${chk('sn','Σωματικές αισθήσεις')}${FAC.length?chk('dy','Η μέρα μου (παράγοντες και ενδείξεις)'):''}${chk('nt','Σημειώσεις')}<div class="row" style="margin-top:10px;flex-wrap:wrap"><button id="rd">Λήψη αναφοράς (HTML)</button></div><small>Η περίοδος είναι αυτή που έχεις επιλέξει στο Ιστορικό. Το αρχείο HTML ανοίγει σε οποιονδήποτε browser και τυπώνεται ή αποθηκεύεται ως PDF.</small></div><div class="rp">${reportBody(a,s,e,o)}</div><button class="t" id="bkr">← Πίσω στο ιστορικό</button>`;
  app.querySelectorAll('[data-rk]').forEach(c=>c.onchange=()=>{o[c.dataset.rk]=c.checked?1:0;render()});
  document.getElementById('rd').onclick=()=>dl('mood-report.html','<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Αναφορά διάθεσης</title><style>'+RCSS+'</'+'style></head><body>'+reportBody(a,s,e,o)+'</body></html>');
  document.getElementById('bkr').onclick=()=>nav('hist')}
@@ -1096,19 +1502,27 @@ const dl=async(name,data)=>{let d=null;try{d=window.claude?await window.claude.u
  alert('Η λήψη του αρχείου δεν ολοκληρώθηκε. Δοκίμασε να ανοίξεις τη σελίδα σε κανονικό browser.');return false};
 function imp(txt){const j=JSON.parse(txt),inc=Array.isArray(j)?j:j.entries;if(!Array.isArray(inc))throw 0;
  const a=load(),have=new Set(a.map(x=>x.t));let n=0;
- inc.forEach(x=>{if(x&&Q[x.q]&&typeof x.w==='string'&&Number.isFinite(x.t)&&!have.has(x.t)){a.push({t:x.t,q:x.q,w:x.w,e:x.e,ctx:x.ctx&&typeof x.ctx==='object'?x.ctx:{},note:String(x.note||''),from:x.from,strat:x.strat});have.add(x.t);n++}});
+ inc.forEach(x=>{if(x&&Q[x.q]&&typeof x.w==='string'&&Number.isFinite(x.t)&&!have.has(x.t)){a.push({t:x.t,q:x.q,w:x.w,e:x.e,ctx:x.ctx&&typeof x.ctx==='object'?x.ctx:{},note:String(x.note||''),...(Array.isArray(x.sens)&&x.sens.some(v=>typeof v==='string'&&v.trim())?{sens:x.sens.filter(v=>typeof v==='string'&&v.trim()).map(v=>v.trim().slice(0,40)).slice(0,30)}:{}),from:x.from,strat:x.strat});have.add(x.t);n++}});
  a.sort((x,y)=>y.t-x.t);save(a);
  if(j.ctx&&typeof j.ctx==='object')Object.entries(j.ctx).forEach(([k,v])=>{if(Array.isArray(v)){C[k]=C[k]||[];v.forEach(o=>{if(typeof o==='string'&&!C[k].includes(o))C[k].push(o)})}});
- saveC();return n}
+ if(Array.isArray(j.sens))j.sens.forEach(v=>{if(typeof v==='string'){v=v.trim().slice(0,40);if(v&&!SENSALL().includes(v)&&!SENSC.includes(v)&&SENSC.length<60)SENSC.push(v)}});
+ let dn=0;if(j&&j.days){const I=cleanDays(j.days);Object.keys(I).forEach(d=>{const cur=DAYS[d]||(DAYS[d]={});let add=0;Object.keys(I[d]).forEach(k=>{if(cur[k]===undefined){cur[k]=I[d][k];add=1}});dn+=add});saveDays()}
+ imp.d=dn;saveSN();saveC();return n}
+function bodyIns(a){const L=a.filter(x=>sx(x).length);if(!L.length)return '';
+ const c={};L.forEach(x=>sx(x).forEach(v=>c[v]=(c[v]||0)+1));
+ const top=Object.entries(c).sort((p,q)=>q[1]-p[1]||p[0].localeCompare(q[0],'el')).slice(0,5);
+ const by={};L.forEach(x=>{const g=by[x.w]=by[x.w]||{n:0,c:{}};g.n++;sx(x).forEach(v=>g.c[v]=(g.c[v]||0)+1)});
+ const per=Object.entries(by).filter(([w,g])=>g.n>=2).sort((p,q)=>q[1].n-p[1].n).slice(0,3).map(([w,g])=>'<br><small><b>'+esc(w)+'</b>: '+Object.entries(g.c).sort((p,q)=>q[1]-p[1]).slice(0,2).map(([v,k])=>esc(v)+' ('+k+'/'+g.n+')').join(', ')+'</small>');
+ return `<div class="card"><b>Στο σώμα</b> <small>· ${L.length} καταγραφές με αισθήσεις</small><br><small>Συχνότερα: ${top.map(([v,k])=>esc(v)+' ('+k+'×)').join(', ')}</small>${per.join('')}</div>`}
 function insights(a){
  const m={},part=h=>h>=5&&h<12?'Πρωί':h>=12&&h<18?'Μεσημέρι–απόγευμα':h>=18&&h<23?'Βράδυ':'Νύχτα';
  const add=(g,o,q)=>{const k=g+'|'+o;m[k]=m[k]||{g,o,n:0,red:0,yellow:0,blue:0,green:0};m[k].n++;m[k][q]++};
  a.forEach(x=>{add('Ώρα',part(new Date(x.t).getHours()),x.q);Object.entries(x.ctx||{}).forEach(([g,o])=>{if(o)add(g,o,x.q)})});
  const rows=Object.values(m).filter(r=>r.n>=2).sort((x,y)=>y.n-x.n).slice(0,12),K=Object.keys(Q);
- if(!rows.length)return '<p class="s">Για insights χρειάζονται τουλάχιστον 2 καταγραφές με την ίδια επιλογή πλαισίου ή ώρα.</p>';
- return rows.map(r=>{const d=K.reduce((p,k)=>r[k]>r[p]?k:p,'red');return `<div class="card"><div class="row"><b>${esc(r.o)}</b><small>${esc(r.g)} · ${r.n}</small><small style="margin-left:auto">${Math.round(r[d]/r.n*100)}% ${Q[d].n.toLowerCase()}</small></div><div class="bar">${K.map(k=>r[k]?`<div style="flex:${r[k]};background:${Q[k].c}"></div>`:'').join('')}</div></div>`}).join('')}
+ if(!rows.length)return bodyIns(a)+'<p class="s">Για insights χρειάζονται τουλάχιστον 2 καταγραφές με την ίδια επιλογή πλαισίου ή ώρα.</p>';
+ return bodyIns(a)+rows.map(r=>{const d=K.reduce((p,k)=>r[k]>r[p]?k:p,'red');return `<div class="card"><div class="row"><b>${esc(r.o)}</b><small>${esc(r.g)} · ${r.n}</small><small style="margin-left:auto">${Math.round(r[d]/r.n*100)}% ${Q[d].n.toLowerCase()}</small></div><div class="bar">${K.map(k=>r[k]?`<div style="flex:${r[k]};background:${Q[k].c}"></div>`:'').join('')}</div></div>`}).join('')}
 function hist(){
- const all=load(),fm=(l=>{const m={};l.forEach(f=>{if(f.from&&(!m[f.from]||f.t<m[f.from].t))m[f.from]=f});return m})(all),[s,e]=range(),[ps,pe]=range(H.o-1),mt=x=>!H.f||(x.w+' '+(x.e||'')+' '+Object.values(x.ctx||{}).join(' ')+' '+(x.note||'')).toLowerCase().includes(H.f.toLowerCase()),a=all.filter(x=>x.t>=s&&x.t<e&&mt(x)),pa=all.filter(x=>x.t>=ps&&x.t<pe&&mt(x));
+ const all=load(),fm=(l=>{const m={};l.forEach(f=>{if(f.from&&(!m[f.from]||f.t<m[f.from].t))m[f.from]=f});return m})(all),[s,e]=range(),[ps,pe]=range(H.o-1),mt=x=>!H.f||(x.w+' '+(x.e||'')+' '+Object.values(x.ctx||{}).join(' ')+' '+sx(x).join(' ')+' '+(x.note||'')).toLowerCase().includes(H.f.toLowerCase()),a=all.filter(x=>x.t>=s&&x.t<e&&mt(x)),pa=all.filter(x=>x.t>=ps&&x.t<pe&&mt(x));
  const nb={day:24,week:7,month:new Date(s.getFullYear(),s.getMonth()+1,0).getDate(),year:12}[H.m];
  const bk=Array.from({length:nb},()=>({red:0,yellow:0,blue:0,green:0}));
  const bi=t=>{const d=new Date(t);return H.m==='day'?d.getHours():H.m==='week'?Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-s)/864e5):H.m==='month'?d.getDate()-1:d.getMonth()};
@@ -1117,35 +1531,44 @@ function hist(){
  const cnt={red:0,yellow:0,blue:0,green:0},wc={};
  a.forEach(x=>{cnt[x.q]++;wc[x.w]=(wc[x.w]||0)+1});
  const top=Object.entries(wc).sort((x,y)=>y[1]-x[1]).slice(0,5).map(x=>`${x[0]} (${x[1]})`).join(', ');
- const body=a.length?`<h2>Ανασκόπηση</h2>${review(a)}<div class="ch">${bk.map(b=>`<div class="col">${K.map(k=>b[k]?`<i style="height:${b[k]/mx*80}px;background:${Q[k].c}"></i>`:'').join('')}</div>`).join('')}</div><div class="bar">${K.map(k=>cnt[k]?`<div style="flex:${cnt[k]};background:${Q[k].c}"></div>`:'').join('')}</div><small>Συχνότερα: ${esc(top)}</small><h2>Πίνακας διάθεσης</h2>${heat(a)}<h2>Τάση</h2>${trend(a,bi,nb)}<h2>Σύγκριση</h2>${compare(a,pa,ps,pe)}<h2>Insights</h2>${insights(a)}<h2>Καταγραφές (${a.length})</h2>`+a.map(x=>{const d=new Date(x.t).toLocaleString('el-GR',{dateStyle:'short',timeStyle:'short'});const cx=[x.from?'Επανέλεγχος'+(x.strat?' μετά από «'+x.strat+'»':''):'',...Object.values(x.ctx||{})].filter(Boolean).join(' · ');return `<div class="card"><div class="row"><span class="dot" style="background:${Q[x.q].c}"></span><b>${x.w}</b>${x.e?`<small>${x.e}</small>`:''}<small style="margin-left:auto">${d}</small></div>${cx?`<small>${esc(cx)}</small>`:''}${x.note?`<p style="margin:6px 0 0">${esc(x.note)}</p>`:''}${fm[x.t]?`<small>🔒 Ακολούθησε: ${fm[x.t].strat?'«'+esc(fm[x.t].strat)+'» → ':''}${esc(fm[x.t].w)}</small>`:''}<div class="acts">${fm[x.t]?'':`<button class="t" data-st="${x.t}">Τι δοκίμασα;</button>`}<button class="t" data-ed="${x.t}">Επεξεργασία</button><button class="t" data-del="${x.t}">Διαγραφή</button></div></div>`}).join(''):'<p class="s">Καμία καταγραφή σε αυτή την περίοδο.</p>';
- app.innerHTML=`<div class="seg">${MODES.map(([k,n])=>`<button class="${H.m===k?'on':''}" data-m="${k}">${n}</button>`).join('')}</div><div class="pn"><button id="pv">‹</button><b>${label(s,e)}</b><button id="nx" ${H.o>=0?'disabled':''}>›</button></div><input id="hf" class="srch" placeholder="Αναζήτηση: συναίσθημα, πλαίσιο, σημείωση…" value="${esc(H.f||'')}">${body}<div class="card"><b>Δεδομένα</b> <small>${SET.lastBackup?'· τελευταίο αντίγραφο: '+new Date(SET.lastBackup).toLocaleDateString('el-GR'):'· χωρίς αντίγραφο ακόμα'}</small><div class="row" style="flex-wrap:wrap;margin-top:8px"><button id="xj">Εξαγωγή JSON</button><button id="im">Εισαγωγή JSON</button><button id="rpt">Λήψη Αναφοράς</button></div><input type="file" id="fi" accept=".json,application/json" hidden aria-label="Αρχείο JSON για εισαγωγή">${all.length?'<button class="t" id="clr">Διαγραφή όλων</button>':''}</div>`;
+ const body=a.length?`<h2>Ανασκόπηση</h2>${review(a)}<div class="ch">${bk.map(b=>`<div class="col">${K.map(k=>b[k]?`<i style="height:${b[k]/mx*80}px;background:${Q[k].c}"></i>`:'').join('')}</div>`).join('')}</div><div class="bar">${K.map(k=>cnt[k]?`<div style="flex:${cnt[k]};background:${Q[k].c}"></div>`:'').join('')}</div><small>Συχνότερα: ${esc(top)}</small><h2>Πίνακας διάθεσης</h2>${heat(a)}<h2>Τάση</h2>${trend(a,bi,nb)}<h2>Σύγκριση</h2>${compare(a,pa,ps,pe)}<h2>Insights</h2>${insights(a)}<h2>Καταγραφές (${a.length})</h2>`+a.map(x=>{const d=new Date(x.t).toLocaleString('el-GR',{dateStyle:'short',timeStyle:'short'});const cx=[x.from?'Επανέλεγχος'+(x.strat?' μετά από «'+x.strat+'»':''):(x.strat?'Μετά από «'+x.strat+'»':''),...Object.values(x.ctx||{})].filter(Boolean).join(' · ');return `<div class="card"><div class="row"><span class="dot" style="background:${Q[x.q].c}"></span><b>${esc(x.w)}</b>${x.e?`<small>${esc(x.e)}</small>`:''}<small style="margin-left:auto">${d}</small></div>${cx?`<small>${esc(cx)}</small>`:''}${sx(x).length?`<div><small>Στο σώμα: ${esc(sx(x).join(' · '))}</small></div>`:''}${x.note?`<p style="margin:6px 0 0">${esc(x.note)}</p>`:''}${fm[x.t]?`<small>🔒 Ακολούθησε: ${fm[x.t].strat?'«'+esc(fm[x.t].strat)+'» → ':''}${esc(fm[x.t].w)}</small>`:''}<div class="acts">${fm[x.t]?'':`<button class="t" data-st="${x.t}">Τι δοκίμασα;</button>`}<button class="t" data-ed="${x.t}">Επεξεργασία</button><button class="t" data-del="${x.t}">Διαγραφή</button></div></div>`}).join(''):'<p class="s">Καμία καταγραφή σε αυτή την περίοδο.</p>';
+ app.innerHTML=`<div class="seg">${MODES.map(([k,n])=>`<button class="${H.m===k?'on':''}" data-m="${k}">${n}</button>`).join('')}</div><div class="pn"><button id="pv">‹</button><b>${label(s,e)}</b><button id="nx" ${H.o>=0?'disabled':''}>›</button></div>${H.m==='day'?dayCard(ymd(s)):''}<input id="hf" class="srch" placeholder="Αναζήτηση: συναίσθημα, πλαίσιο, σημείωση…" value="${esc(H.f||'')}">${FAC.length?'<button class="t" id="dyl">Η μέρα μου: παράγοντες και ενδείξεις →</button>':''}${body}<div class="card"><b>Δεδομένα</b> <small>${SET.lastBackup?'· τελευταίο αντίγραφο: '+new Date(SET.lastBackup).toLocaleDateString('el-GR'):'· χωρίς αντίγραφο ακόμα'}</small><div class="row" style="flex-wrap:wrap;margin-top:8px"><button id="xj">Εξαγωγή JSON</button><button id="im">Εισαγωγή JSON</button><button id="rpt">Λήψη Αναφοράς</button></div><input type="file" id="fi" accept=".json,application/json" hidden aria-label="Αρχείο JSON για εισαγωγή">${all.length||Object.keys(DAYS).length?'<button class="t" id="clr">Διαγραφή όλων</button>':''}</div>`;
  app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{H={m:b.dataset.m,o:0,f:H.f};render()});
  document.getElementById('pv').onclick=()=>{H.o--;render()};
  document.getElementById('nx').onclick=()=>{H.o++;render()};
  const g=id=>document.getElementById(id),c=g('clr');
- if(c)c.onclick=()=>{if(confirm('Να διαγραφούν όλες οι καταγραφές;')){save([]);render()}};
+ if(c)c.onclick=()=>{if(confirm('Να διαγραφούν όλες οι καταγραφές και τα στοιχεία «Η μέρα μου»;')){save([]);DAYS={};saveDays();render()}};
  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const t=+b.dataset.del,x=load().find(y=>y.t===t);if(!x)return;save(load().filter(y=>y.t!==t));render();toast('Η καταγραφή διαγράφηκε',()=>{const a=load();if(!a.some(y=>y.t===t))a.push(x);a.sort((p,q)=>q.t-p.t);save(a)})});
- app.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{const x=load().find(y=>y.t===+b.dataset.ed);if(!x)return;S={v:'ctx',q:x.q,w:x.w,e:x.e,ctx:{...x.ctx},note:x.note||'',when:x.t,edit:x.t,from:x.from,strat:x.strat};nav('ctx')});
+ app.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{const x=load().find(y=>y.t===+b.dataset.ed);if(!x)return;S={v:'ctx',q:x.q,w:x.w,e:x.e,ctx:{...x.ctx},note:x.note||'',sens:[...sx(x)],when:x.t,edit:x.t,from:x.from,strat:x.strat};nav('ctx')});
  app.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{const x=load().find(y=>y.t===+b.dataset.st);if(x){S={v:'strat',o:x,pick:null,ctx:{},note:''};nav('strat')}});
  g('hf').onchange=ev=>{H.f=ev.target.value.trim();render()};
- g('xj').onclick=async()=>{if(await dl('mood-meter.json',JSON.stringify({v:1,entries:load(),ctx:C},null,1))){SET.lastBackup=Date.now();saveSet();render()}};
+ const dyl=g('dyl');if(dyl)dyl.onclick=()=>dayOpen(ymd(Date.now()),'hist');app.querySelectorAll('[data-dy]').forEach(b=>b.onclick=()=>dayOpen(b.dataset.dy,'hist'));
+ g('xj').onclick=async()=>{if(await dl('mood-meter.json',JSON.stringify({v:1,entries:load(),ctx:C,sens:SENSC,days:DAYS},null,1))){SET.lastBackup=Date.now();saveSet();render()}};
  g('rpt').onclick=()=>{S={v:'report',ctx:{},note:''};nav('report')};
  g('im').onclick=()=>g('fi').click();
- g('fi').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const n=imp(r.result);alert('Προστέθηκαν '+n+' νέες καταγραφές.');render()}catch(x){alert('Μη έγκυρο αρχείο.')}};r.readAsText(f)};
+ g('fi').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const n=imp(r.result);alert('Προστέθηκαν '+n+' νέες καταγραφές'+(imp.d?' και στοιχεία «Η μέρα μου» για '+imp.d+(imp.d===1?' ημέρα':' ημέρες'):'')+'.');render()}catch(x){alert('Μη έγκυρο αρχείο.')}};r.readAsText(f)};
 }
 
 const load=()=>{try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&typeof x==='object'&&Q[x.q]&&typeof x.w==='string'&&Number.isFinite(x.t)).sort((p,q)=>q.t-p.t):[]}catch(e){return []}};
 const save=a=>{try{localStorage.setItem(KEY,JSON.stringify(a))}catch(e){}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S={v:'home',q:null,w:null,ctx:{},note:''};
+/* Σωματικές αισθήσεις: έτοιμες επιλογές ανά περιοχή του σώματος + δικές σου (αποθηκεύονται στον browser) */
+const SENSG=[['Κεφάλι & πρόσωπο',['πονοκέφαλος','σφιγμένο σαγόνι','ζεστό πρόσωπο','ζάλη']],['Λαιμός & ώμοι',['κόμπος στον λαιμό','σφιγμένοι ώμοι','ξηρό στόμα']],['Στήθος & ανάσα',['σφίξιμο στο στήθος','βάρος στο στήθος','γρήγορος παλμός','γρήγορη αναπνοή','βαθιά αναπνοή']],['Στομάχι',['πεταρίσματα στο στομάχι','κόμπος στο στομάχι','ναυτία']],['Χέρια & πόδια',['κρύα ή ιδρωμένα χέρια','τρέμουλο','ανήσυχα πόδια','βαριά χέρια και πόδια']],['Όλο το σώμα',['κούραση','ένταση στους μύες','ιδρώτας','μούδιασμα','ζεστασιά','χαλάρωση','ανάλαφρο σώμα','ενέργεια']]];
+const SNK='moodmeter.sens.v1';let SENSC=[];try{const t=JSON.parse(localStorage.getItem(SNK));if(Array.isArray(t))SENSC=t.filter(v=>typeof v==='string'&&v.trim()).map(v=>v.trim().slice(0,40)).slice(0,60)}catch(e){}
+const saveSN=()=>{try{localStorage.setItem(SNK,JSON.stringify(SENSC))}catch(e){}};
+const SENSALL=()=>SENSG.flatMap(g=>g[1]);
+const sx=x=>Array.isArray(x&&x.sens)?x.sens.filter(v=>typeof v==='string'&&v):[];
 const app=document.getElementById('app'),nC=document.getElementById('nCheck'),nH=document.getElementById('nHist');
 const top0=()=>{try{window.scrollTo(0,0);const el=document.scrollingElement||document.documentElement;if(el)el.scrollTop=0}catch(x){}};
-const nD=document.getElementById('nDict');function nav(v){if(v!=='dict')ZQ=null;S.v=v;top0();nC.className=v==='hist'||v==='dict'||v==='strat'||v==='report'?'':'on';nH.className=v==='hist'||v==='strat'||v==='report'?'on':'';nD.className=v==='dict'?'on':'';render()}
+const nD=document.getElementById('nDict');function nav(v){if(v!=='dict')ZQ=null;S.v=v;top0();const inH=v==='hist'||v==='strat'||v==='report'||(v==='day'&&S.dfrom==='hist');nC.className=inH||v==='dict'?'':'on';nH.className=inH?'on':'';nD.className=v==='dict'?'on':'';render()}
 nC.onclick=()=>{S={v:'home',q:null,w:null,ctx:{},note:''};nav('home')};nH.onclick=()=>nav('hist');nD.onclick=()=>nav('dict');
 function render(){
  if(S.v==='home'){
   const b=(k)=>`<button class="q ${k}" data-q="${k}"><b>${Q[k].n}</b><span>${Q[k].d}</span></button>`;
-  app.innerHTML=`<p class="s">${S.fu?'Πώς νιώθεις τώρα'+(S.fu.strat?', μετά από «'+esc(S.fu.strat)+'»':'')+'; ':''}Διάλεξε το τεταρτημόριο που ταιριάζει περισσότερο.</p><div class="grid">${b('red')}${b('yellow')}${b('blue')}${b('green')}</div><div class="axis"><span>← Δυσάρεστο</span><span>Ευχάριστο →</span></div><div class="axis"><span>↑ Υψηλή ενέργεια</span><span>↓ Χαμηλή ενέργεια</span></div><label class="qk"><input type="checkbox" id="qk" ${SET.quick?'checked':''}> Γρήγορη καταγραφή (αποθήκευση με ένα πάτημα στη λέξη)</label>`;
+  app.innerHTML=`<p class="s">${S.fu?'Πώς νιώθεις τώρα'+(S.fu.strat?', μετά από «'+esc(S.fu.strat)+'»':'')+'; ':''}Διάλεξε το τεταρτημόριο που ταιριάζει περισσότερο.</p><div class="grid">${b('red')}${b('yellow')}${b('blue')}${b('green')}</div><div class="axis"><span>← Δυσάρεστο</span><span>Ευχάριστο →</span></div><div class="axis"><span>↑ Υψηλή ενέργεια</span><span>↓ Χαμηλή ενέργεια</span></div>${S.fu?'':homeDay()}<label class="qk"><input type="checkbox" id="qk" ${SET.quick?'checked':''}> Γρήγορη καταγραφή (αποθήκευση με ένα πάτημα στη λέξη)</label>${S.fu?'':'<button class="t" id="exh">Χρειάζομαι μια άσκηση →</button>'}`;
+  const dh=document.getElementById('dh');if(dh)dh.onclick=()=>{S.dd=ymd(Date.now());S.dfrom='home';nav('day')};
+  const xh=document.getElementById('exh');if(xh)xh.onclick=()=>{S={v:'exl',q:null,w:null,ctx:{},note:''};nav('exl')};
   app.querySelectorAll('[data-q]').forEach(e=>e.onclick=()=>{S.q=e.dataset.q;S.v='word';render()});
   document.getElementById('qk').onchange=ev=>{SET.quick=ev.target.checked;saveSet()};
  }else if(S.v==='word'){
@@ -1157,20 +1580,38 @@ function render(){
    b.onmouseenter=b.onfocus=()=>{if(!lock)show(m)};
    b.onclick=()=>{if(SET.quick){S.w=m[1];S.e=m[0];if(S.fu)saveFollow();else quickSave();return}lock=true;S.w=m[1];S.e=m[0];show(m);app.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));b.classList.add('sel');go.style.display='block';go.textContent='Συνέχεια με «'+m[1]+'» →';go.onclick=()=>{if(S.fu)saveFollow();else{S.v='ctx';render()}}}});
   document.getElementById('back').onclick=()=>nav('home');
- }else if(S.v==='ctx'){ctxView();}else if(S.v==='done'){doneView();}else if(S.v==='dict'){dictView();}else if(S.v==='result'){resultView();}else if(S.v==='strat'){stratView();}else if(S.v==='report'){reportView();}else hist();
+ }else if(S.v==='ctx'){ctxView();}else if(S.v==='done'){doneView();}else if(S.v==='dict'){dictView();}else if(S.v==='result'){resultView();}else if(S.v==='strat'){stratView();}else if(S.v==='report'){reportView();}else if(S.v==='ex'){exView();}else if(S.v==='exl'){exlView();}else if(S.v==='day'){dayView();}else hist();
 }
 (()=>{const ov=document.getElementById('ov');document.getElementById('ovx').onclick=closeOv;ov.onclick=ev=>{if(ev.target===ov)closeOv()};document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeOv()})})();
 let _ft=0;
 function fit(root){(root||document).querySelectorAll('.cell').forEach(c=>{if(c.closest('.board'))return;const W=c.clientWidth-4;if(W<=0)return;c.querySelectorAll('.wd,span').forEach(el=>{el.style.whiteSpace='nowrap';el.style.fontSize='';let fs=parseFloat(getComputedStyle(el).fontSize)||12;const min=7;let n=0;while(el.scrollWidth>W&&fs>min&&n++<40){fs-=.5;el.style.fontSize=fs+'px'}if(el.scrollWidth>W){el.style.whiteSpace='';el.style.fontSize=''}})})}
 window.addEventListener('resize',()=>{clearTimeout(_ft);_ft=setTimeout(()=>{if(S.v==='word'||S.v==='dict')fit(app)},150)});
-const _render=render;render=function(){closeOv();_render();banner();fit(app)};
+const _render=render;render=function(){exStop();closeOv();_render();banner();fit(app)};
 const THS=['auto','light','dark'],THL={auto:'🌓 Αυτόματο',light:'☀️ Φωτεινό',dark:'🌙 Σκοτεινό'};
 function applyTheme(){const t=THS.includes(SET.theme)?SET.theme:'auto',r=document.documentElement;if(r&&r.setAttribute){if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t)}const b=document.getElementById('th');if(b)b.textContent=THL[t]}
 document.getElementById('th').onclick=()=>{const i=THS.indexOf(SET.theme||'auto');SET.theme=THS[(i+1)%3];saveSet();applyTheme()};
 applyTheme();
 render();
 </script>
+<script>
+/* ── PWA (μόνο στην έκδοση που φιλοξενείται): service worker, μόνιμη αποθήκευση, συντομεύσεις, χρώμα τίτλου ── */
+(function(){
+ try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}catch(e){}
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+ try{
+  const m=document.querySelector('meta[name="theme-color"]'),mq=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)');
+  const upd=()=>{if(m)m.setAttribute('content',SET.theme==='dark'||(SET.theme!=='light'&&mq&&mq.matches)?'#161614':'#f6f5f1')};
+  const ap=applyTheme;applyTheme=function(){ap();upd()};upd();
+  if(mq&&mq.addEventListener)mq.addEventListener('change',upd);
+ }catch(e){}
+ /* Συντομεύσεις (jump list των Windows / μενού εικονιδίου): #record, #day, #exercises */
+ const go=()=>{const h=location.hash.slice(1);if(!h)return;
+  if(h==='record'){nC.onclick()}
+  else if(h==='day'){if(FAC.length)dayOpen(ymd(Date.now()),'home')}
+  else if(h==='exercises'){S={v:'exl',q:null,w:null,ctx:{},note:''};nav('exl')}
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}};
+ go();window.addEventListener('hashchange',go);
+})();
+</script>
 </body>
 </html>
-
-</body></html>
